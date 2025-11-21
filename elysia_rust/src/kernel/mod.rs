@@ -7,11 +7,8 @@
 // - Beheer van de kernfunctionaliteit
 // - Initialisatie en event loop
 // ===============================================
-use tokio::time::{sleep, Duration};
 use tokio::sync::mpsc;
 
-use chrono::Utc;
-use uuid::Uuid;
 
 pub mod events;
 pub mod event_bus;
@@ -20,7 +17,6 @@ pub mod database;
 
 use events::Event;
 use event_bus::EventBus;
-use agenda_point::AgendaPoint;
 use database::Database;
 
 use crate::modules::marthe::MartheCore;
