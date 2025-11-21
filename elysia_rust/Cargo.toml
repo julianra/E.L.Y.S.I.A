@@ -14,4 +14,7 @@ chrono = { version = "0.4", features = ["serde"] }
 
 # uuid nodig
 uuid = { version = "1", features = ["v4", "serde"] }
+axum = { version = "0.8.7", features = ["json"] }
+hyper = "1.8.1"
+
 

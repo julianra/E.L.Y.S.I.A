@@ -1,6 +1,5 @@
 use rusqlite::{Connection, Result};
 use std::sync::{Arc, Mutex};
-use std::path::PathBuf;
 
 pub struct Database {
     pub conn: Arc<Mutex<Connection>>,

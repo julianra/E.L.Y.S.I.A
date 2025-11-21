@@ -1,15 +1,20 @@
+// Elysia Rust - main.rs
+// ===============================================
+// FILE: src/main.rs
+// ROLE: Application Entry Point
+// PART OF: Core Layer
+// ===============================================
+
 mod kernel;
+mod api;
 mod modules;
 
 use kernel::Kernel;
 
-#[tokio::main] // <-- NODIG om async fn main toe te laten
+#[tokio::main]
 async fn main() {
     println!("[CORE] Elysia Rust booting...");
 
     let kernel = Kernel::new();
-    kernel.run().await; // <-- BELANGRIJK: kernel run is async
-
-    // Deze regel zal voorlopig nooit bereikt worden,
-    // omdat de kernel blijft loopen.
+    kernel.run().await;
 }
