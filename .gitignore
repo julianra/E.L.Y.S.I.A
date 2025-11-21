@@ -1,0 +1,47 @@
+# ============================================
+# Rust / Cargo Gitignore
+# ============================================
+
+# Compiled files
+target/
+
+# Cargo lock files for libraries (for binaries keep Cargo.lock)
+Cargo.lock
+
+# Backup files
+*.rs.bk
+
+# IDE / Editor settings
+.idea/
+.vscode/
+.DS_Store
+
+# Logs
+*.log
+
+# Environment variables
+.env
+
+# Rust tools
+rustfmt.toml
+.clippy.toml
+
+# Temporary or generated files
+*.tmp
+*.swp
+*.swo
+*~
+
+# WASM build artifacts (for later)
+wasm/
+*.wasm
+wasm-pack.log
+
+# Build artifacts
+/debug/
+release/
+
+# ELYSIA-specific (future plugins, state, runtime)
+data/
+logs/
+snapshots/
