@@ -1,13 +1,18 @@
-pub mod event_bus;
-pub mod events;
-pub mod tasks;
-
-use tokio::sync::mpsc;
 use tokio::time::{sleep, Duration};
+use tokio::sync::mpsc;
 
-use crate::kernel::event_bus::EventBus;
-use crate::kernel::events::Event;
-use crate::kernel::tasks::Task;
+use chrono::Utc;
+use uuid::Uuid;
+
+pub mod events;
+pub mod event_bus;
+pub mod agenda_point;
+pub mod database;
+
+use events::Event;
+use event_bus::EventBus;
+use agenda_point::AgendaPoint;
+use database::Database;
 
 use crate::modules::marthe::MartheCore;
 
@@ -21,38 +26,71 @@ impl Kernel {
     pub async fn run(&self) {
         println!("[KERNEL] Kernel is running...");
 
-        // === EventBus kanaal voor Kernel zelf ===
-        let (kernel_tx, mut kernel_rx) = mpsc::channel(64);
-        let bus = EventBus::new(kernel_tx.clone());
+        // === 1) DATABASE OPENEN ===
+        let db = Database::new().expect("Kon database niet openen");
 
-        // === Marthe krijgt haar eigen mailbox (receiver) ===
-        let (marthe_tx, marthe_rx) = mpsc::channel(32);
+        // === 2) TABELLEN MAKEN VOOR GEBRUIK ===
+        db.init().expect("Kon database structuur niet initialiseren");
+        println!("[KERNEL] Database structuur klaar.");
 
-        // === Start Marthe module ===
-        tokio::spawn(async move {
-            let mut marthe = MartheCore::new(marthe_rx);
-            marthe.run().await;
+        // === 3) EVENTBUS AANMAKEN ===
+        let (bus_tx, mut bus_rx) = mpsc::channel::<Event>(64);
+        let event_bus = EventBus::new(bus_tx.clone());
+
+        // === 4) MAILBOX VOOR MARTHE ===
+        let (marthe_tx, marthe_rx) = mpsc::channel::<Event>(32);
+
+        // === 5) START MARTHE MODULE ===
+        tokio::spawn({
+            let db_conn = db.conn.clone();
+            async move {
+                let mut marthe = MartheCore::new(marthe_rx, db_conn);
+                marthe.run().await;
+            }
         });
 
-        // === KERNEL MAIN LOOP ===
+        // === 6) KERNEL MAIN LOOP ===
         loop {
-            // 1) Kernel heartbeat uitsturen
-            bus.send(Event::KernelHeartbeat).await;
+            // Heartbeat
+            event_bus.send(Event::KernelHeartbeat).await;
 
-            // 2) Test: stuur taak naar iedereen
-            bus.send(Event::TaskAdded(Task {
+            // DEMO-AGENDAITEM
+            let agenda = AgendaPoint {
+                id: Uuid::new_v4().to_string(),
                 name: "Koken om 16:30".to_string(),
                 duration_minutes: 45,
-            })).await;
+                created_at: Utc::now(),
 
-            // 3) Kernel ontvangt ALLE events van modules
-            tokio::select! {
-                Some(event) = kernel_rx.recv() => {
-                    println!("[KERNEL] Received event: {:?}", event);
+                start_time: None,
+                end_time: None,
+                priority: None,
+                task_type: None,
+                project: None,
+                location: None,
+                deadline: None,
 
-                    // 4) Stuur ALLE events door naar Marthe
-                    let _ = marthe_tx.send(event.clone()).await;
-                }
+                energy_cost: None,
+                category: None,
+                recurrence: None,
+                importance_score: None,
+                predicted_duration: None,
+                confidence_score: None,
+                emotional_load: None,
+
+                required_tools: None,
+                blocking_rules: None,
+                context_tags: None,
+                linked_tasks: None,
+            };
+
+            event_bus.send(Event::AgendaAdded(agenda.clone())).await;
+
+            // Ontvang events van EventBus
+            if let Some(event) = bus_rx.recv().await {
+                println!("[KERNEL] Received event: {:?}", event);
+
+                // Stuur ALLE events door naar Marthe
+                let _ = marthe_tx.send(event.clone()).await;
             }
 
             sleep(Duration::from_secs(3)).await;
