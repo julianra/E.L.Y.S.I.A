@@ -1,27 +1,34 @@
 use tokio::time::{sleep, Duration};
-use tokio::sync::mpsc::Sender;
+use tokio::sync::mpsc::{Receiver};
 
 use crate::kernel::events::Event;
 
 pub struct MartheCore {
-    sender: Sender<Event>,
+    pub receiver: Receiver<Event>,
 }
 
 impl MartheCore {
-    pub fn new(sender: Sender<Event>) -> Self {
-        MartheCore { sender }
+    pub fn new(receiver: Receiver<Event>) -> Self {
+        Self { receiver }
     }
 
-    pub async fn run(&self) {
+    pub async fn run(&mut self) {
         println!("[MARTHE] Module gestart.");
 
-        loop {
-            println!("[MARTHE] Wachten op nieuwe taken...");
-
-            // Stuur heartbeat naar kernel
-            let _ = self.sender.send(Event::MartheHeartbeat).await;
-
-            sleep(Duration::from_secs(4)).await;
+        while let Some(event) = self.receiver.recv().await {
+            match event {
+                Event::TaskAdded(task) => {
+                    println!(
+                        "[MARTHE] Nieuwe taak ontvangen: {} ({} min)",
+                        task.name,
+                        task.duration_minutes
+                    );
+                }
+                Event::KernelHeartbeat => {
+                    println!("[MARTHE] Kernel leeft nog ✔");
+                }
+                Event::MartheHeartbeat => {}
+            }
         }
     }
 }
