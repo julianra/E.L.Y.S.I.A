@@ -1,35 +1,35 @@
-mod kernel;
 mod api;
+mod kernel;
 mod modules;
 
+use tokio::{task, net::TcpListener};
 use kernel::Kernel;
 use api::api_router;
-use tokio::task;
-use axum::Router;
-use std::net::SocketAddr;
 
 #[tokio::main]
 async fn main() {
     println!("[CORE] Elysia Rust booting...");
 
-    // Start de Kernel in een aparte async task
-    task::spawn(async {
-        let kernel = Kernel::new();
-        kernel.run().await;
+    // 1) EventBus + Receiver
+    let (bus, bus_rx) = Kernel::build_eventbus();
+
+    // 2) API router
+    let app = api_router(bus.clone());
+
+    // 3) API server parallel
+    task::spawn(async move {
+        println!("[API] Listening on http://0.0.0.0:3000");
+
+        let listener = TcpListener::bind("0.0.0.0:3000")
+            .await
+            .expect("Kan poort 3000 niet openen");
+
+        axum::serve(listener, app)
+            .await
+            .expect("API server crash");
     });
 
-    // API router
-    let app: Router = api_router();
-
-    // Adres
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
-    println!("[API] HTTP server luistert op http://{}", addr);
-
-    // Axum 0.7 server starten
-    axum::serve(
-        tokio::net::TcpListener::bind(addr).await.unwrap(),
-        app,
-    )
-    .await
-    .unwrap();
+    // 4) Kernel starten
+    let kernel = Kernel::new();
+    kernel.run_with_bus(bus_rx).await;
 }

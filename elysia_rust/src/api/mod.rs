@@ -8,11 +8,13 @@
 // - Definities van externe request structs
 // ===============================================
 pub mod external;
-use axum::{Router, routing::post};
-use crate::api::external::add_agenda_http;
 
-pub fn api_router() -> Router {
+use axum::{Router, routing::post};
+use crate::kernel::event_bus::EventBus;
+use self::external::add_agenda_http;
+
+pub fn api_router(bus: EventBus) -> Router {
     Router::new()
         .route("/external/agenda/add", post(add_agenda_http))
-        // ... andere routes
+        .with_state(bus)
 }

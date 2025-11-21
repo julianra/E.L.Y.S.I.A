@@ -9,7 +9,6 @@
 // ===============================================
 use tokio::sync::mpsc;
 
-
 pub mod events;
 pub mod event_bus;
 pub mod agenda_point;
@@ -18,52 +17,46 @@ pub mod database;
 use events::Event;
 use event_bus::EventBus;
 use database::Database;
-
 use crate::modules::marthe::MartheCore;
 
 pub struct Kernel;
 
 impl Kernel {
+
     pub fn new() -> Self {
         Kernel
     }
 
-    pub async fn run(&self) {
-    println!("[KERNEL] Kernel is running...");
+    // Maak een eventbus die API en Kernel delen
+    pub fn build_eventbus() -> (EventBus, mpsc::Receiver<Event>) {
+        let (tx, rx) = mpsc::channel::<Event>(64);
+        (EventBus::new(tx), rx)
+    }
 
-    // === 1) DATABASE OPENEN ===
-    let db = Database::new().expect("Kon database niet openen");
+    pub async fn run_with_bus(&self, mut bus_rx: mpsc::Receiver<Event>) {
+        println!("[KERNEL] Kernel is running...");
 
-    // === 2) STRUCTUUR AANMAKEN ===
-    db.init().expect("Kon database structuur niet initialiseren");
-    println!("[KERNEL] Database structuur klaar.");
+        // Database openen
+        let db = Database::new().expect("Kon database niet openen");
+        db.init().expect("Kon database structuur niet initialiseren");
 
-    // === 3) EVENTBUS (tx/rx) ===
-    let (bus_tx, mut bus_rx) = mpsc::channel::<Event>(64);
-    let event_bus = EventBus::new(bus_tx.clone());
+        // MARTHE mailbox
+        let (marthe_tx, marthe_rx) = mpsc::channel::<Event>(32);
 
-    // === 4) MARTHE MAILBOX ===
-    let (marthe_tx, marthe_rx) = mpsc::channel::<Event>(32);
+        // MARTHE starten
+        tokio::spawn({
+            let db_conn = db.conn.clone();
+            async move {
+                let mut marthe = MartheCore::new(marthe_rx, db_conn);
+                marthe.run().await;
+            }
+        });
 
-    // === 5) MARTHE STARTEN ===
-    tokio::spawn({
-        let db_conn = db.conn.clone();
-        async move {
-            let mut marthe = MartheCore::new(marthe_rx, db_conn);
-            marthe.run().await;
-        }
-    });
-
-    // === 6) MAIN EVENT LOOP ===
-    loop {
-        // Ontvang events van EventBus
-        if let Some(event) = bus_rx.recv().await {
+        // Kernel event-loop
+        while let Some(event) = bus_rx.recv().await {
             println!("[KERNEL] Received event: {:?}", event);
 
-            // ALLES naar Marthe sturen
-            let _ = marthe_tx.send(event).await;
+            let _ = marthe_tx.send(event.clone()).await;
         }
     }
-}
-
 }

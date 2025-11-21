@@ -11,9 +11,6 @@ use chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
 use crate::api::external::ExternalAgendaRequest;
 
-// ------------------------------------------------------------
-// 1) AgendaPoint Struct
-// ------------------------------------------------------------
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgendaPoint {
     pub id: String,
@@ -43,23 +40,16 @@ pub struct AgendaPoint {
     pub linked_tasks: Option<Vec<String>>,
 }
 
-// ------------------------------------------------------------
-// 2) from_external()
-// ------------------------------------------------------------
 impl AgendaPoint {
     pub fn from_external(req: ExternalAgendaRequest) -> Self {
-        let id = uuid::Uuid::new_v4().to_string();
-        let now = Utc::now();
-
-        AgendaPoint {
-            id,
+        Self {
+            id: uuid::Uuid::new_v4().to_string(),
             name: req.name,
             duration_minutes: req.duration_minutes.unwrap_or(30),
-            created_at: now,
+            created_at: Utc::now(),
 
-            start_time: req.date.as_ref().and_then(|d| d.parse::<DateTime<Utc>>().ok()),
+            start_time: None,
             end_time: None,
-
             priority: Some(req.priority),
             task_type: Some(req.r#type),
             project: Some("external".into()),
