@@ -1,14 +1,10 @@
 // ===============================================
 // FILE: src/kernel/agenda_point.rs
-// ROLE: Agenda Point Definition
-// PART OF: Kernel Layer
-// PURPOSE:
-// - Definitie van het AgendaPoint struct
-// - Omzetten van externe requests naar AgendaPoints
 // ===============================================
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, NaiveTime};
 use serde::{Serialize, Deserialize};
+
 use crate::api::external::ExternalAgendaRequest;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -18,7 +14,7 @@ pub struct AgendaPoint {
     pub duration_minutes: u32,
     pub created_at: DateTime<Utc>,
 
-    pub calendar_day_id: Option<String>, 
+    pub calendar_day_id: Option<String>,
 
     pub start_time: Option<String>,
     pub end_time: Option<String>,
@@ -45,21 +41,33 @@ pub struct AgendaPoint {
 
 impl AgendaPoint {
     pub fn from_external(req: ExternalAgendaRequest) -> Self {
+
+        // Parse exacte starttijd
+        let start_time = req.exact_start.as_ref().and_then(|s| {
+            NaiveTime::parse_from_str(s, "%H:%M:%S").ok()
+        }).map(|t| t.format("%H:%M:%S").to_string());
+
+        // Parse exacte eindtijd
+        let end_time = req.exact_end.as_ref().and_then(|s| {
+            NaiveTime::parse_from_str(s, "%H:%M:%S").ok()
+        }).map(|t| t.format("%H:%M:%S").to_string());
+
         Self {
             id: uuid::Uuid::new_v4().to_string(),
             name: req.name,
             duration_minutes: req.duration_minutes.unwrap_or(30),
             created_at: Utc::now(),
 
-            start_time: None,
-            end_time: None,
+            start_time,
+            end_time,
+
             priority: Some(req.priority),
             task_type: Some(req.r#type),
             project: Some("external".into()),
             location: Some(req.location),
-            deadline: None,
 
             calendar_day_id: None,
+            deadline: None,
 
             energy_cost: None,
             category: None,

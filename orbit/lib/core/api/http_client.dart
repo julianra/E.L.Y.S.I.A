@@ -1,3 +1,6 @@
+// lib/core/api/http_client.dart
+// Simple HTTP client for making API requests
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 

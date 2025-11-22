@@ -1,3 +1,5 @@
+// lib/features/agenda/pages/add_agenda_page.dart
+// Page to add a new agenda point
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -32,6 +34,8 @@ class _AddAgendaPageState extends State<AddAgendaPage> {
   bool _isTodo = false;
   String _todoWhen = "today";
   DateTime? _todoCustomDate;
+  DateTime? _basicDateTime;
+
 
   // -----------------------
   // ADVANCED FIELDS
@@ -235,6 +239,46 @@ class _AddAgendaPageState extends State<AddAgendaPage> {
               ],
 
               const SizedBox(height: 20),
+              // BASIC DATE + TIME PICKER
+              ListTile(
+                title: Text(
+                  _basicDateTime == null
+                      ? "Kies datum & tijd"
+                      : "Gekozen: $_basicDateTime",
+                ),
+                trailing: const Icon(Icons.calendar_today),
+                onTap: () async {
+                  final now = DateTime.now();
+
+                  // 1. Datum kiezen
+                  final date = await showDatePicker(
+                    context: context,
+                    firstDate: now,
+                    lastDate: DateTime(now.year + 5),
+                    initialDate: now,
+                  );
+
+                  if (date == null) return;
+
+                  // 2. Tijd kiezen
+                  final time = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay.now(),
+                  );
+                  if (time == null) return;
+
+                  setState(() {
+                    _basicDateTime = DateTime(
+                      date.year,
+                      date.month,
+                      date.day,
+                      time.hour,
+                      time.minute,
+                    );
+                  });
+                },
+              ),
+              const SizedBox(height: 20),
 
               // -----------------------
               // ADVANCED TOGGLE
@@ -435,7 +479,9 @@ class _AddAgendaPageState extends State<AddAgendaPage> {
                                 : _location,
 
                             // TODO DATE
-                            date: _isTodo ? todoDate : null,
+                            date: _isTodo 
+                            ? todoDate 
+                            : _basicDateTime, // BASIC DATETIME gestuurd
 
                             exactStart: _exactStart,
                             exactEnd: _exactEnd,

@@ -1,5 +1,11 @@
 import 'dart:convert';
 
+String? _toIso(dynamic dt) {
+  if (dt == null) return null;
+  if (dt is DateTime) return dt.toUtc().toIso8601String();
+  return dt.toString();
+}
+
 class ExternalAgendaRequest {
   final String name;
 
@@ -59,14 +65,17 @@ class ExternalAgendaRequest {
     final map = {
       "name": name,
       "duration_minutes": durationMinutes,
-      "date": date?.toIso8601String(),
-      "exact_start": exactStart?.toIso8601String(),
-      "exact_end": exactEnd?.toIso8601String(),
-      "deadline_end": deadlineEnd?.toIso8601String(),
+      "date": _toIso(date),
       "priority": priority,
       "type": taskType,
       "project": project,
       "location": location,
+
+      // Deze stuur je mee, maar Rust gebruikt ze nog niet
+      "exact_start": _toIso(exactStart),
+      "exact_end": _toIso(exactEnd),
+      "deadline_end": _toIso(deadlineEnd),
+
       "energy_cost": energyCost,
       "category": category,
       "recurrence": recurrence,
@@ -74,18 +83,17 @@ class ExternalAgendaRequest {
       "predicted_duration": predictedDuration,
       "confidence_score": confidenceScore,
       "emotional_load": emotionalLoad,
+
       "required_tools": requiredTools,
       "blocking_rules": blockingRules,
       "context_tags": contextTags,
       "linked_tasks": linkedTasks,
     };
 
-    // 👇 verwijder null velden → Rust raakt NIET meer in paniek
+    // verwijder null waarden → proper JSON
     map.removeWhere((key, value) => value == null);
 
-    // 👇 veilige debug print
     print("SENDING JSON: ${jsonEncode(map)}");
-
     return map;
   }
 }

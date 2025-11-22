@@ -1,3 +1,5 @@
+// lib/core/api/agenda_service.dart
+// Service to handle agenda-related API calls
 import 'dart:convert';
 
 import 'package:orbit/core/api/http_client.dart';
