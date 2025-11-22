@@ -18,8 +18,11 @@ pub struct AgendaPoint {
     pub duration_minutes: u32,
     pub created_at: DateTime<Utc>,
 
-    pub start_time: Option<DateTime<Utc>>,
-    pub end_time: Option<DateTime<Utc>>,
+    pub calendar_day_id: Option<String>, 
+
+    pub start_time: Option<String>,
+    pub end_time: Option<String>,
+
     pub priority: Option<String>,
     pub task_type: Option<String>,
     pub project: Option<String>,
@@ -55,6 +58,8 @@ impl AgendaPoint {
             project: Some("external".into()),
             location: Some(req.location),
             deadline: None,
+
+            calendar_day_id: None,
 
             energy_cost: None,
             category: None,
