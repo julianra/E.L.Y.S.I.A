@@ -1,56 +1,67 @@
 // ======================================================================
 // 📍 FILE: elysia_core/src/db.rs
 //
-// SQLite migraties voor:
-//   - Core (elysia_core/migrations/*.sql)
-//   - Modules (modules/<name>/migrations/*.sql)
+// 📝 BESCHRIJVING:
+//   Voert ALLE SQL migraties uit:
+//     - elysia_core/migrations/*.sql
+//     - modules/*/migrations/*.sql
+//
+//   Voert elk bestand uit in alfabetische volgorde.
 // ======================================================================
 
-use sqlx::{SqlitePool, query};
-use std::{fs, path::Path};
+use rusqlite::Connection;
+use std::fs;
+use std::path::{Path, PathBuf};
 
-pub async fn run_migrations(pool: &SqlitePool) {
-    // -------------------------
-    // 1. CORE MIGRATIONS
-    // -------------------------
-    let core_migration_path = Path::new("elysia_core/migrations");
+pub fn run_migrations(conn: &Connection) -> Result<(), Box<dyn std::error::Error>> {
+    let mut all_sql_files = vec![];
 
-    if core_migration_path.exists() {
-        for file in fs::read_dir(core_migration_path).unwrap() {
-            let file = file.unwrap();
-            let sql = fs::read_to_string(file.path())
-                .expect("Could not read core migration file");
-            execute_sql_batch(pool, &sql).await;
-        }
+    // 1. Core migraties
+    collect_sql_files("elysia_core/migrations", &mut all_sql_files);
+
+    // 2. Module migraties
+    collect_module_migrations("modules", &mut all_sql_files);
+
+    // 3. Sorteren op naam
+    all_sql_files.sort();
+
+    // 4. SQL uitvoeren
+    for file in all_sql_files {
+        let sql = fs::read_to_string(&file)?;
+        conn.execute_batch(&sql)?;
     }
 
-    // -------------------------
-    // 2. MODULE MIGRATIONS
-    // -------------------------
-    let modules_dir = Path::new("modules");
+    Ok(())
+}
 
-    if modules_dir.exists() {
-        for module in fs::read_dir(modules_dir).unwrap() {
-            let module = module.unwrap();
-            let migration_path = module.path().join("migrations");
+// ======================================================================
+// Verzamelt alle *.sql files in een directory
+// ======================================================================
+fn collect_sql_files(dir: &str, out: &mut Vec<String>) {
+    let path = Path::new(dir);
+    if !path.exists() { return; }
 
-            if migration_path.exists() {
-                for file in fs::read_dir(migration_path).unwrap() {
-                    let file = file.unwrap();
-                    let sql = fs::read_to_string(file.path())
-                        .expect("Could not read module migration file");
-                    execute_sql_batch(pool, &sql).await;
-                }
+    if let Ok(entries) = fs::read_dir(path) {
+        for entry in entries.flatten() {
+            let p = entry.path();
+            if p.extension().and_then(|x| x.to_str()) == Some("sql") {
+                out.push(p.to_string_lossy().to_string());
             }
         }
     }
 }
 
-async fn execute_sql_batch(pool: &SqlitePool, sql: &str) {
-    for statement in sql.split(';') {
-        let trimmed = statement.trim();
-        if !trimmed.is_empty() {
-            query(trimmed).execute(pool).await.unwrap();
-        }
+// ======================================================================
+// Verzamelt migraties van ALLE modules
+// modules/<module>/migrations/*.sql
+// ======================================================================
+fn collect_module_migrations(base_dir: &str, out: &mut Vec<String>) {
+    let base = Path::new(base_dir);
+    if !base.exists() { return; }
+
+    for entry in fs::read_dir(base).unwrap() {
+        let module_dir = entry.unwrap().path();
+        let migration_dir = module_dir.join("migrations");
+        collect_sql_files(migration_dir.to_str().unwrap(), out);
     }
 }

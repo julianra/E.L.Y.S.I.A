@@ -145,6 +145,6 @@ Podfile.lock
 # Sentry / crash dumps
 *.dmp
 
-# Firebase configs (optioneel—haal weg als je wél wil committen)
-# google-services.json
-# GoogleService-Info.plist
+ Firebase configs (optioneel—haal weg als je wél wil committen)
+ google-services.json
+ GoogleService-Info.plist

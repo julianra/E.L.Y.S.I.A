@@ -16,6 +16,9 @@ pub mod module;
 pub mod context;
 pub mod router;
 pub mod events;
+pub mod db_init;
+pub mod db;
+
 
 pub use crate::kernel::Kernel;
 pub use crate::module::ElysiaModule;

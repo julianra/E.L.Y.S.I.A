@@ -20,10 +20,13 @@ log = "0.4"
 env_logger = "0.11"
 thiserror = "1"
 inventory = "0.1"
+rusqlite = { version = "0.31", features = ["bundled"] }
+dirs = "5.0"
 
 [lib]
 proc-macro = false
 crate-type = ["rlib", "dylib"]
+
 
 [package.metadata.inventory]
 

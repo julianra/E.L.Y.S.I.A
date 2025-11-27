@@ -1,97 +1,46 @@
 // ======================================================================
 // 📍 FILE: elysia_core/src/db_init.rs
 //
-// Foolproof SQLite init voor ELYSIA
+// 📝 BESCHRIJVING:
+//   Initialiseert de database. Probeert eerst AppData, anders fallback.
+//   - Maakt directory aan als die niet bestaat
+//   - Opent SQLite database
+//
+// 🔧 RETURN:
+//   (Connection, pad_string)
 // ======================================================================
 
-use sqlx::SqlitePool;
+use rusqlite::Connection;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
-// ============================================================
-// 1. Preferred AppData DB Location
-// ============================================================
-fn preferred_appdata_path() -> Option<PathBuf> {
-    dirs::data_local_dir().map(|base| base.join("Elysia").join("elysia.db"))
-}
+pub fn init_database() -> Result<(Connection, String), Box<dyn std::error::Error>> {
+    // 1. Pad bepalen (AppData → fallback)
+    let db_path = get_default_db_path();
 
-// ============================================================
-// 2. Fallback: project-root/data/elysia.db 
-// (GEEN current_dir, 100% stabiel)
-// ============================================================
-fn fallback_project_path() -> PathBuf {
-    let core_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let project_root = core_dir
-        .parent()
-        .expect("Could not determine project root");
-    project_root.join("data").join("elysia.db")
-}
-
-// ============================================================
-// Helper: directory maken
-// ============================================================
-fn ensure_parent_exists(path: &Path) -> std::io::Result<()> {
-    if let Some(parent) = path.parent() {
-        if !parent.exists() {
-            fs::create_dir_all(parent)?;
-        }
-    }
-    Ok(())
-}
-
-// ============================================================
-// Debug logging
-// ============================================================
-fn debug_paths() {
-    log::warn!("[DB-DEBUG] Preferred AppData: {:?}", preferred_appdata_path());
-    log::warn!("[DB-DEBUG] Fallback path: {:?}", fallback_project_path());
-    log::warn!("[DB-DEBUG] Working directory: {:?}", std::env::current_dir());
-}
-
-// ============================================================
-// Public functie om SQLite te initialiseren
-// ============================================================
-pub async fn init_sqlite() -> (SqlitePool, PathBuf) {
-    debug_paths();
-
-    // -------------------------
-    // 1. PROBEER APPDATA
-    // -------------------------
-    if let Some(p) = preferred_appdata_path() {
-        log::info!("[DB] Trying AppData DB at: {}", p.display());
-
-        if ensure_parent_exists(&p).is_ok() {
-            let url = format!("sqlite:///{}", p.to_string_lossy());
-
-            if let Ok(pool) = SqlitePool::connect(&url).await {
-                log::info!("[DB] Using AppData DB");
-                return (pool, p);
-            } else {
-                log::warn!("[DB] AppData DB failed, falling back...");
-            }
-        }
+    // 2. Parent-directory aanmaken
+    if let Some(parent) = db_path.parent() {
+        fs::create_dir_all(parent)?;
     }
 
-    // -------------------------
-    // 2. FALLBACK → PROJECT ROOT
-    // -------------------------
-    let fallback = fallback_project_path();
-    log::info!("[DB] Trying fallback DB at: {}", fallback.display());
+    // 3. SQLite openen (maakt file automatisch aan)
+    let conn = Connection::open(&db_path)?;
 
-    ensure_parent_exists(&fallback)
-        .expect("Cannot create fallback DB directory");
+    Ok((conn, db_path.to_string_lossy().to_string()))
+}
 
-    let url = format!("sqlite:///{}", fallback.to_string_lossy());
-
-    match SqlitePool::connect(&url).await {
-        Ok(pool) => {
-            log::info!("[DB] Using fallback SQLite DB");
-            (pool, fallback)
-        }
-        Err(e) => panic!(
-            "Could not open fallback SQLite DB: {:?}\nPath: {}",
-            e,
-            fallback.display()
-        ),
+// ======================================================================
+// Bepaalt database-pad
+// ======================================================================
+fn get_default_db_path() -> PathBuf {
+    // Windows: %APPDATA%\Elysia
+    if let Some(appdata) = dirs::config_dir() {
+        let mut p = appdata;
+        p.push("Elysia");
+        p.push("elysia.db");
+        return p;
     }
+
+    // fallback → lokale map
+    PathBuf::from("elysia_local.db")
 }

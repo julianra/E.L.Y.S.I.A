@@ -1,36 +1,41 @@
 // ======================================================================
-// 📍 FILE: elysia/elysia_core/src/context.rs
+// 📍 FILE: elysia_core/src/context.rs
 //
 // 📝 BESCHRIJVING:
-//   De globale context waarin alle modules draaien.
-//   Dit wordt later uitgebreid met database-connecties,
-//   config, caches, pipelines, enz.
-//
-// 🔧 TAKEN:
-//   - Opslag van key-value metadata
-//   - Toegang tot globale systeemstatus
-//   - Delen van data tussen kernel en modules
+//   Houdt metadata en database-verbinding bij voor ALLE modules.
 // ======================================================================
 
 use std::collections::HashMap;
+use rusqlite::Connection;
 
-#[derive(Default)]
 pub struct KernelContext {
-    pub metadata: HashMap<String, String>,
+    meta: HashMap<String, String>,
+    db: Option<Connection>,
 }
 
 impl KernelContext {
     pub fn new() -> Self {
         Self {
-            metadata: HashMap::new()
+            meta: HashMap::new(),
+            db: None,
         }
     }
 
-    pub fn set_meta(&mut self, key: impl Into<String>, value: impl Into<String>) {
-        self.metadata.insert(key.into(), value.into());
+    // Metadata
+    pub fn set_meta(&mut self, key: &str, value: &str) {
+        self.meta.insert(key.to_string(), value.to_string());
     }
 
-    pub fn get_meta(&self, key: &str) -> Option<&str> {
-        self.metadata.get(key).map(|s| s.as_str())
+    pub fn get_meta(&self, key: &str) -> Option<&String> {
+        self.meta.get(key)
+    }
+
+    // Database
+    pub fn set_db(&mut self, conn: Connection) {
+        self.db = Some(conn);
+    }
+
+    pub fn db(&self) -> &Connection {
+        self.db.as_ref().expect("Database not initialized")
     }
 }

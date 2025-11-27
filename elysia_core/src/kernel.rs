@@ -42,30 +42,48 @@ pub enum KernelError {
 }
 
 impl Kernel {
-    pub fn boot_and_run() -> Result<(), KernelError> {
-        env_logger::init();
-        log::info!("[CORE] Elysia Kernel booting...");
+  pub fn boot_and_run() -> Result<(), KernelError> {
+    env_logger::init();
+    log::info!("[CORE] Elysia Kernel booting...");
 
-        let mut kernel = Kernel {
-            ctx: KernelContext::new(),
-            router: Router::new(),
-            bus: EventBus::new(),
-            modules: vec![],
-        };
+    // 1. DB initialiseren
+    let (conn, path) = crate::db_init::init_database()
+        .map_err(|e| KernelError::InitError(format!("DB init failed: {}", e)))?;
+    log::info!("[CORE] Database initialized at {}", path);
 
-        // Laad ALLE modules die zichzelf hebben geregistreerd
-for reg in inventory::iter::<crate::module::ModuleRegistration> {
-    kernel.modules.push((reg.module)());
-}
+    // 2. Migraties uitvoeren
+    crate::db::run_migrations(&conn)
+        .map_err(|e| KernelError::InitError(format!("Migration failed: {}", e)))?;
+    log::info!("[CORE] Database migrations completed.");
 
-        kernel.init_modules()?;
-        kernel.start_modules();
-        kernel.run_main_loop();
 
-        Ok(())
+    // 3. Kernel-object maken
+    let mut kernel = Kernel {
+        ctx: KernelContext::new(),
+        router: Router::new(),
+        bus: EventBus::new(),
+        modules: vec![],
+    };
+
+    // 4. DB in context stoppen
+    kernel.ctx.set_db(conn);
+
+
+    // 5. Modules verzamelen
+    for reg in inventory::iter::<crate::module::ModuleRegistration> {
+        kernel.modules.push((reg.module)());
     }
 
-    
+    // 6. Modules init/eladen
+    kernel.init_modules()?;
+    kernel.start_modules();
+
+    // 7. Dummy runtime
+    kernel.run_main_loop();
+
+    Ok(())
+}
+
     fn init_modules(&mut self) -> Result<(), KernelError> {
         for module in &self.modules {
             log::info!("[CORE] Initializing {}", module.name());
