@@ -18,6 +18,7 @@ pub mod router;
 pub mod events;
 pub mod db_init;
 pub mod db;
+pub mod mdns;
 
 
 pub use crate::kernel::Kernel;

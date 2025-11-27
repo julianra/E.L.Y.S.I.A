@@ -17,15 +17,18 @@
 use crate::{KernelContext, Router, EventBus, ElysiaModule};
 use thiserror::Error;
 use crate::register_module;
-
-
+use mdns_sd::ServiceDaemon; // alleen nodig voor het veld in Kernel
 
 pub struct Kernel {
     ctx: KernelContext,
     router: Router,
     bus: EventBus,
     modules: Vec<Box<dyn ElysiaModule>>,
+    // We bewaren de mDNS-daemon zodat hij niet gedropt wordt.
+    // Onderstreept om "unused field" warnings te vermijden voorlopig.
+    _mdns: Option<ServiceDaemon>,
 }
+
 impl Default for CoreModule {
     fn default() -> Self {
         CoreModule
@@ -42,47 +45,55 @@ pub enum KernelError {
 }
 
 impl Kernel {
-  pub fn boot_and_run() -> Result<(), KernelError> {
-    env_logger::init();
-    log::info!("[CORE] Elysia Kernel booting...");
+    pub fn boot_and_run() -> Result<(), KernelError> {
+        env_logger::init();
+        log::info!("[CORE] Elysia Kernel booting...");
 
-    // 1. DB initialiseren
-    let (conn, path) = crate::db_init::init_database()
-        .map_err(|e| KernelError::InitError(format!("DB init failed: {}", e)))?;
-    log::info!("[CORE] Database initialized at {}", path);
+        // 1. DB initialiseren
+        let (conn, path) = crate::db_init::init_database()
+            .map_err(|e| KernelError::InitError(format!("DB init failed: {}", e)))?;
+        log::info!("[CORE] Database initialized at {}", path);
 
-    // 2. Migraties uitvoeren
-    crate::db::run_migrations(&conn)
-        .map_err(|e| KernelError::InitError(format!("Migration failed: {}", e)))?;
-    log::info!("[CORE] Database migrations completed.");
+        // 2. Migraties uitvoeren
+        crate::db::run_migrations(&conn)
+            .map_err(|e| KernelError::InitError(format!("Migration failed: {}", e)))?;
+        log::info!("[CORE] Database migrations completed.");
 
+        // 3. mDNS starten (fout = warning, geen hard fail)
+        let mdns_handle = match crate::mdns::start_mdns(3000) {
+            Ok(handle) => Some(handle),
+            Err(e) => {
+                log::warn!("[CORE] Failed to start mDNS: {}", e);
+                None
+            }
+        };
 
-    // 3. Kernel-object maken
-    let mut kernel = Kernel {
-        ctx: KernelContext::new(),
-        router: Router::new(),
-        bus: EventBus::new(),
-        modules: vec![],
-    };
+        // 4. Kernel-object maken
+        let mut kernel = Kernel {
+            ctx: KernelContext::new(),
+            router: Router::new(),
+            bus: EventBus::new(),
+            modules: vec![],
+            _mdns: mdns_handle,
+        };
 
-    // 4. DB in context stoppen
-    kernel.ctx.set_db(conn);
+        // 5. DB in context stoppen
+        kernel.ctx.set_db(conn);
 
+        // 6. Modules verzamelen
+        for reg in inventory::iter::<crate::module::ModuleRegistration> {
+            kernel.modules.push((reg.module)());
+        }
 
-    // 5. Modules verzamelen
-    for reg in inventory::iter::<crate::module::ModuleRegistration> {
-        kernel.modules.push((reg.module)());
+        // 7. Modules init/eladen
+        kernel.init_modules()?;
+        kernel.start_modules();
+
+        // 8. Dummy runtime
+        kernel.run_main_loop();
+
+        Ok(())
     }
-
-    // 6. Modules init/eladen
-    kernel.init_modules()?;
-    kernel.start_modules();
-
-    // 7. Dummy runtime
-    kernel.run_main_loop();
-
-    Ok(())
-}
 
     fn init_modules(&mut self) -> Result<(), KernelError> {
         for module in &self.modules {
@@ -101,10 +112,13 @@ impl Kernel {
     }
 
     fn run_main_loop(&self) {
-        log::info!("[CORE] Kernel is running.");
-        log::info!("[CORE] Routes: {:?}", self.router.routes);
-        log::info!("[CORE] Event handlers: {:?}", self.bus.handlers);
+    log::info!("[CORE] Kernel is running. Press CTRL+C to stop.");
+
+    loop {
+        std::thread::sleep(std::time::Duration::from_secs(1));
     }
+}
+
 }
 
 struct CoreModule;

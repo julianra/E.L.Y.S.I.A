@@ -1,17 +1,25 @@
+// lib/screens/home_screen.dart
+// Main screen for the Orbit app
+// Displays kernel status and allows adding tasks to Marthe
+//
 import 'package:flutter/material.dart';
 import '../api/elysia_api.dart';
 import '../widgets/status_card.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final String apiBaseUrl;
+
+  const HomeScreen({
+    required this.apiBaseUrl,
+    super.key,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // 🔥 Zet dit IP juist (van je PC)
-  final api = ElysiaApi(baseUrl: "http://192.168.0.118:3000");
+  late final ElysiaApi api = ElysiaApi(baseUrl: widget.apiBaseUrl);
 
   String kernelStatus = "Unknown";
   bool loading = false;
@@ -56,7 +64,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             StatusCard(status: kernelStatus, loading: loading),
-
             const SizedBox(height: 20),
 
             TextField(
@@ -68,14 +75,12 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
             const SizedBox(height: 10),
-
             ElevatedButton(
               onPressed: addTask,
               child: const Text("Add Task to Marthe"),
             ),
 
             const SizedBox(height: 20),
-
             ElevatedButton(
               onPressed: checkHealth,
               child: const Text("Check Kernel Status"),
