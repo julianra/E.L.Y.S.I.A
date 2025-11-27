@@ -16,6 +16,9 @@
 
 use crate::{KernelContext, Router, EventBus, ElysiaModule};
 use thiserror::Error;
+use crate::register_module;
+
+
 
 pub struct Kernel {
     ctx: KernelContext,
@@ -23,6 +26,14 @@ pub struct Kernel {
     bus: EventBus,
     modules: Vec<Box<dyn ElysiaModule>>,
 }
+impl Default for CoreModule {
+    fn default() -> Self {
+        CoreModule
+    }
+}
+
+// Automatische registratie
+register_module!(CoreModule);
 
 #[derive(Debug, Error)]
 pub enum KernelError {
@@ -42,7 +53,10 @@ impl Kernel {
             modules: vec![],
         };
 
-        kernel.register_module(Box::new(CoreModule));
+        // Laad ALLE modules die zichzelf hebben geregistreerd
+for reg in inventory::iter::<crate::module::ModuleRegistration> {
+    kernel.modules.push((reg.module)());
+}
 
         kernel.init_modules()?;
         kernel.start_modules();
