@@ -65,11 +65,7 @@ for reg in inventory::iter::<crate::module::ModuleRegistration> {
         Ok(())
     }
 
-    fn register_module(&mut self, module: Box<dyn ElysiaModule>) {
-        log::info!("[CORE] Registering module: {}", module.name());
-        self.modules.push(module);
-    }
-
+    
     fn init_modules(&mut self) -> Result<(), KernelError> {
         for module in &self.modules {
             log::info!("[CORE] Initializing {}", module.name());
