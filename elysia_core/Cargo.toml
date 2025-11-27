@@ -1,0 +1,21 @@
+# ================================================================
+# 📍 FILE: elysia/elysia_core/Cargo.toml
+#
+# 📝 BESCHRIJVING:
+#   De Cargo-manifest van de ELYSIA Core library crate.
+#   Dit is de motor van het systeem (eventbus, router, kernel).
+#
+# 🔧 TAKEN:
+#   - Definieert dependencies voor logging en foutafhandeling
+#   - Compileert de core als library (lib.rs)
+#   - Wordt gebruikt door kernel en alle modules
+# ================================================================
+[package]
+name = "elysia_core"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+log = "0.4"
+env_logger = "0.11"
+thiserror = "1"

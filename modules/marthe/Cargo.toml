@@ -1,0 +1,27 @@
+# =====================================================================
+# 📍 FILE: elysia/modules/marthe/Cargo.toml
+#
+# 📝 BESCHRIJVING:
+#   De manifest van de MARTHE module. Dit is een ELYSIA plugin-crate.
+#
+# 🔧 TAKEN:
+#   - Registreert zich automatisch als module via inventory
+#   - Implementeert ElysiaModule
+#   - Wordt gediscovered door de kernel zonder hard-coding
+# =====================================================================
+
+[package]
+name = "marthe"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+elysia_core = { path = "../../elysia_core" }
+inventory = "0.1"
+log = "0.4"
+
+
+[lib]
+crate-type = ["rlib", "dylib"]
+
+[package.metadata.inventory]

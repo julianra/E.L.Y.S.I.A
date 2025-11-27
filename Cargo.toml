@@ -1,0 +1,21 @@
+# ================================================================
+# 📍 FILE: elysia/Cargo.toml
+#
+# 📝 BESCHRIJVING:
+#   Dit is het workspace manifest van ELYSIA.
+#   Het bevat zelf GEEN code. Het definieert alleen welke crates
+#   deel uitmaken van het project.
+#
+# 🔧 TAKEN:
+#   - Groepeert kernel en elysia_core in één workspace
+#   - Zorgt dat alle crates samen gecompileerd worden
+#   - Maakt pad-gebaseerde dependencies mogelijk
+#   - Centrale plek om alle toekomstige modules toe te voegen
+# ================================================================
+[workspace]
+members = [
+    "kernel",
+    "elysia_core"
+]
+
+resolver = "2"
