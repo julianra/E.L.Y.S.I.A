@@ -10,6 +10,9 @@
 --   - Basisstructuur voor dagschema's / tijdsblokken
 --   - Wordt automatisch uitgevoerd door ELYSIA Core tijdens boot
 -- ======================================================================
+-- ======================================================================
+-- 📍 FILE: modules/marthe/migrations/marthe.sql
+-- ======================================================================
 
 CREATE TABLE IF NOT EXISTS marthe_tasks (
     id TEXT PRIMARY KEY,

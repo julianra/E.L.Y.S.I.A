@@ -11,7 +11,7 @@
 
 use rusqlite::Connection;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 
 pub fn run_migrations(conn: &Connection) -> Result<(), Box<dyn std::error::Error>> {
     let mut all_sql_files = vec![];

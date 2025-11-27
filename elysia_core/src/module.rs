@@ -1,46 +1,48 @@
 // ======================================================================
-// 📍 FILE: elysia/elysia_core/src/module.rs
-//
-// 📝 BESCHRIJVING:
-//   Definieert de interface waar ALLE ELYSIA-modules aan moeten voldoen.
-//   (Marthe, Junk, Catnip, Finn, enz.)
-//
-// 🔧 TAKEN:
-//   - Uniforme lifecycle API voor modules
-//   - Kernel kan modules generiek behandelen
-//   - Modules kunnen routes, events en background tasks registreren
+// 📍 FILE: elysia_core/src/module.rs
 // ======================================================================
 
-use crate::{KernelContext, Router, EventBus};
-// ======================================================================
-// MAKRO VOOR AUTOMATISCHE MODULE-REGISTRATIE
-// ======================================================================
-#[macro_export]
-macro_rules! register_module {
-    ($module_type:ty) => {
-        inventory::submit! {
-            $crate::module::ModuleRegistration {
-                module: || Box::new(<$module_type>::default()),
-            }
-        }
-    };
-}
+use crate::{KernelContext, Router};
+use crate::events::KernelEvent;
 
+// Het basistrait dat ALLE modules moeten implementeren
 pub trait ElysiaModule: Send + Sync {
     fn name(&self) -> &'static str;
 
-    fn init(&self, _ctx: &mut KernelContext) {}
+    fn init(&self, _ctx: &KernelContext) {}
     fn register_routes(&self, _router: &mut Router) {}
-    fn register_event_handlers(&self, _bus: &mut EventBus) {}
-    fn start_background_tasks(&self, _ctx: &KernelContext) {}
+    fn register_event_handlers(&self, _bus: &mut crate::events::EventBus) {}
+
+    fn handle_event(&self, _ctx: &KernelContext, _event: KernelEvent) {}
+
+    // Nodig om Box<dyn ElysiaModule> te kunnen klonen
+    fn box_clone(&self) -> Box<dyn ElysiaModule>;
 }
+
+// Clone implementeren voor Box<dyn ElysiaModule>
+impl Clone for Box<dyn ElysiaModule> {
+    fn clone(&self) -> Box<dyn ElysiaModule> {
+        self.box_clone()
+    }
+}
+
 // ======================================================================
-// MODULE DISCOVERY STRUCTURE
+// 📌 Macro voor auto-registratie via inventory
 // ======================================================================
 
 pub struct ModuleRegistration {
     pub module: fn() -> Box<dyn ElysiaModule>,
 }
 
-// Deze instructie vertelt `inventory` dat we een verzameling moduleregistraties willen.
 inventory::collect!(ModuleRegistration);
+
+#[macro_export]
+macro_rules! register_module {
+    ($module_type:ty) => {
+        inventory::submit! {
+            $crate::module::ModuleRegistration {
+                module: || Box::new(<$module_type>::default())
+            }
+        }
+    };
+}

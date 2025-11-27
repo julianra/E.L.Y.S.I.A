@@ -4,38 +4,39 @@
 // 📝 BESCHRIJVING:
 //   Houdt metadata en database-verbinding bij voor ALLE modules.
 // ======================================================================
+// ======================================================================
+// 📍 FILE: elysia_core/src/context.rs
+// ======================================================================
 
 use std::collections::HashMap;
-use rusqlite::Connection;
+use std::sync::{Arc, RwLock};
 
+use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
+
+#[derive(Clone)]
 pub struct KernelContext {
-    meta: HashMap<String, String>,
-    db: Option<Connection>,
+    pub db_pool: Arc<Pool<SqliteConnectionManager>>,
+    pub meta: Arc<RwLock<HashMap<String, String>>>,
 }
 
 impl KernelContext {
-    pub fn new() -> Self {
-        Self {
-            meta: HashMap::new(),
-            db: None,
+    pub fn new(db_pool: Pool<SqliteConnectionManager>) -> Self {
+        KernelContext {
+            db_pool: Arc::new(db_pool),
+            meta: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
-    // Metadata
-    pub fn set_meta(&mut self, key: &str, value: &str) {
-        self.meta.insert(key.to_string(), value.to_string());
+    pub fn clone_for_http(&self) -> Self {
+        self.clone()
     }
 
-    pub fn get_meta(&self, key: &str) -> Option<&String> {
-        self.meta.get(key)
+    pub fn db(&self) -> r2d2::PooledConnection<SqliteConnectionManager> {
+        self.db_pool.get().expect("Failed to get DB connection")
     }
 
-    // Database
-    pub fn set_db(&mut self, conn: Connection) {
-        self.db = Some(conn);
-    }
-
-    pub fn db(&self) -> &Connection {
-        self.db.as_ref().expect("Database not initialized")
+    pub fn set_meta(&self, key: &str, value: &str) {
+        self.meta.write().unwrap().insert(key.to_string(), value.to_string());
     }
 }
