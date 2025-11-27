@@ -11,7 +11,9 @@
 //   - Wordt quasi nooit gewijzigd (blijft altijd klein)
 // ======================================================================
 
+
 use elysia_core::Kernel;
+use marthe as _;
 
 fn main() {
     if let Err(e) = Kernel::boot_and_run() {

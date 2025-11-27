@@ -19,3 +19,4 @@ edition = "2021"
 [dependencies]
 elysia_core = { path = "../elysia_core" }
 log = "0.4"
+marthe = {path = "../modules/marthe"}

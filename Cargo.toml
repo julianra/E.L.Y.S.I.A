@@ -15,7 +15,8 @@
 [workspace]
 members = [
     "kernel",
-    "elysia_core"
+    "elysia_core",
+    "modules/marthe"
 ]
 
 resolver = "2"

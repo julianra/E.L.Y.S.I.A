@@ -3,25 +3,28 @@
 //
 // 📝 BESCHRIJVING:
 //   MARTHE is de planning-, agenda- en schedulingmodule van ELYSIA.
-//   Registreert zichzelf automatisch via `register_module!` macro.
+//   Deze crate registreert zichzelf automatisch via `inventory`.
 //
 // 🔧 TAKEN:
-//   - Automatische module-registratie
-//   - Agenda-logica (later)
-//   - EventBus V2 handlers registreren
+//   - Zichzelf registreren via register_module!
+//   - Lifecycle implementeren (init, routes, events, background tasks)
+//   - Later: agenda-invoer verwerken, conflictdetectie, AI-planning
 // ======================================================================
 
-use elysia_core::{ElysiaModule, KernelContext, Router, EventBus, EventType};
+use elysia_core::{ElysiaModule, KernelContext, Router, EventBus};
 use elysia_core::register_module;
 
+// De eigenlijke module-struct
 pub struct MartheModule;
 
+// Module moet Default zijn omdat `inventory` hem moet kunnen creëren
 impl Default for MartheModule {
     fn default() -> Self {
         MartheModule
     }
 }
 
+// Automatische registratie
 register_module!(MartheModule);
 
 impl ElysiaModule for MartheModule {
@@ -37,20 +40,9 @@ impl ElysiaModule for MartheModule {
         log::info!("[MARTHE] Registered /marthe/add_task");
     }
 
-    // ⭐ Nieuwe EventBus API (async subscribe)
     fn register_event_handlers(&self, bus: &mut EventBus) {
-        use EventType::*;
-
-        // Luistert naar "marthe.task_requested"
-        bus.subscribe("marthe.task_requested", |event| async move {
-            log::info!("[MARTHE] Event ontvangen: {:?}", event);
-
-            if let MartheTaskAdded(payload) = event {
-                log::info!("[MARTHE] Nieuwe taak: {} = {}", payload.id, payload.name);
-            }
-        });
-
-        log::info!("[MARTHE] Event handler geregistreerd voor marthe.task_requested");
+        bus.register_handler("marthe.task_requested");
+        log::info!("[MARTHE] Registered handler for marthe.task_requested");
     }
 
     fn start_background_tasks(&self, _ctx: &KernelContext) {
