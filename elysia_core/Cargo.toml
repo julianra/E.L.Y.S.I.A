@@ -25,6 +25,7 @@ dirs = "5.0"
 mdns-sd = "0.7"
 tokio = { version = "1", features = ["full"] }
 axum = "0.7"
+local-ip-address = "0.5"
 
 [lib]
 proc-macro = false

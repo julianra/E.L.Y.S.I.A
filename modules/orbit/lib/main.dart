@@ -1,13 +1,12 @@
-// lib/main.dart
-// Main entry point for the Orbit Flutter application
-// Handles server selection and navigation to HomeScreen
-// Uses ServerSelectScreen for server discovery
-//
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
-import 'screens/server_select_screen.dart';
+import 'dart:io';
 
-void main() {
+import 'screens/server_select_screen.dart';
+import 'screens/home_screen.dart';
+import 'storage/server_storage.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const OrbitApp());
 }
 
@@ -20,30 +19,72 @@ class OrbitApp extends StatefulWidget {
 
 class _OrbitAppState extends State<OrbitApp> {
   String? baseUrl;
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedServer();
+  }
+
+  Future<void> _loadSavedServer() async {
+    final saved = await ServerStorage.loadServer();
+
+    if (saved != null) {
+      final ok = await _testServer(saved);
+      if (ok) {
+        setState(() {
+          baseUrl = saved;
+          loading = false;
+        });
+        return;
+      }
+    }
+
+    setState(() => loading = false);
+  }
+
+  Future<bool> _testServer(String base) async {
+    try {
+      final url = Uri.parse("$base/health");
+
+      // Android heeft een workaround nodig voor mDNS hostnames
+      final client = HttpClient()
+        ..connectionTimeout = const Duration(seconds: 2);
+
+      final request = await client.getUrl(url);
+      final response = await request.close();
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void onServerChosen(String url) async {
+    await ServerStorage.saveServer(url);
+    setState(() => baseUrl = url);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Orbit',
-      theme: ThemeData.dark(),
-      home: baseUrl == null
-          ? Builder(builder: (context) {
-              Future(() async {
-                final selected = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ServerSelectScreen(),
-                  ),
-                );
-                if (selected != null) {
-                  setState(() => baseUrl = selected);
-                }
-              });
+    if (loading) {
+      return const MaterialApp(
+        home: Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
 
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
-            })
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: "Orbit",
+      theme: ThemeData.dark(),
+      routes: {
+        "/select-server": (_) => ServerSelectScreen(onSelected: onServerChosen),
+        "/home": (_) => HomeScreen(apiBaseUrl: baseUrl ?? ""),
+      },
+      home: baseUrl == null
+          ? ServerSelectScreen(onSelected: onServerChosen)
           : HomeScreen(apiBaseUrl: baseUrl!),
     );
   }

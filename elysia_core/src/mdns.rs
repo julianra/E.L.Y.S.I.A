@@ -1,52 +1,38 @@
 // ======================================================================
 // 📍 FILE: elysia/elysia_core/src/mdns.rs
-//
-// 📝 BESCHRIJVING:
-//   mDNS helper voor ELYSIA.
-//   - Start een mDNS-daemon
-//   - Registreert een Elysia-service op het lokale netwerk
-//
-// 🔧 TAKEN:
-//   - Zorgt dat Orbit en andere clients ELYSIA automatisch kunnen vinden
 // ======================================================================
 
 use mdns_sd::{ServiceDaemon, ServiceInfo};
 
 pub fn start_mdns(port: u16) -> Result<ServiceDaemon, Box<dyn std::error::Error + Send + Sync>> {
-    // 1. Daemon starten
+    // Local IP ophalen (zoals je al had)
+    let local_ip = local_ip_address::local_ip()?.to_string();
+    log::info!("[CORE] Using local IP for mDNS: {}", local_ip);
+
     let mdns = ServiceDaemon::new()?;
 
-    // 2. Verplichte velden
     let service_type = "_elysia._tcp.local.";
     let instance_name = "Elysia Node";
-    let host_name = "elysia.local."; // hostnaam voor mDNS
 
-    // 3. IP als string → implementeert AsIpAddrs
-    // "0.0.0.0" = OS kiest de juiste interface / IP
-    let ip = "0.0.0.0";
+    // HOSTNAME = IP (Android kan deze resolven)
+    let host_name = &local_ip;
 
-    // 4. TXT properties als key–value paren
     let properties = [("path", "/")];
 
-    // 5. Correcte signature voor mdns-sd 0.7.x:
-    //    new(service_type, instance_name, host_name, ip, port, properties)
     let service_info = ServiceInfo::new(
         service_type,
         instance_name,
-        host_name,
-        ip,
+        host_name,     // <-- IP in plaats van "elysia.local"
+        &local_ip[..], // <-- Adapter IP
         port,
         &properties[..],
     )?;
 
-    // 6. Registreren bij de daemon
     mdns.register(service_info)?;
 
     log::info!(
         "[CORE] mDNS active: {} on {} (port {})",
-        instance_name,
-        service_type,
-        port
+        instance_name, service_type, port
     );
 
     Ok(mdns)

@@ -18,6 +18,7 @@ use crate::{KernelContext, Router, EventBus, ElysiaModule};
 use thiserror::Error;
 use crate::register_module;
 use mdns_sd::ServiceDaemon; // alleen nodig voor het veld in Kernel
+use tokio::runtime::Runtime;
 
 pub struct Kernel {
     ctx: KernelContext,
@@ -88,6 +89,18 @@ impl Kernel {
         // 7. Modules init/eladen
         kernel.init_modules()?;
         kernel.start_modules();
+// Start HTTP server in new thread
+std::thread::spawn(|| {
+    let rt = Runtime::new().unwrap();
+    rt.block_on(async {
+        let app = crate::http::build_router();
+        let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+
+        log::info!("[CORE] HTTP server running on port 3000");
+
+        axum::serve(listener, app).await.unwrap();
+    });
+});
 
         // 8. Dummy runtime
         kernel.run_main_loop();

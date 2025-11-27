@@ -13,22 +13,30 @@ class ElysiaDiscovery {
     final client = MDnsClient();
     await client.start();
 
-    final List<String> servers = [];
+    List<String> servers = [];
 
-    // PTR lookup
+    // Zoek PTR records voor onze service
     await for (final PtrResourceRecord ptr in client.lookup<PtrResourceRecord>(
       ResourceRecordQuery.serverPointer('_elysia._tcp.local'),
     )) {
-      // SRV lookup for this PTR
+
+      // Zoek bijbehorende SRV records
       await for (final SrvResourceRecord srv
           in client.lookup<SrvResourceRecord>(
         ResourceRecordQuery.service(ptr.domainName),
       )) {
+
         final host = srv.target;
         final port = srv.port;
 
-        // Resolve host to IP
-        final ips = await InternetAddress.lookup(host);
+List<InternetAddress> ips;
+
+try {
+  ips = await InternetAddress.lookup(host);
+} catch (_) {
+  // HOSTNAME FAIL? → Android los dit niet op → gebruik host direct als IP
+  ips = [InternetAddress(host)];
+}
         for (var ip in ips) {
           servers.add("http://${ip.address}:$port");
         }

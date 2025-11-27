@@ -1,17 +1,15 @@
 // lib/screens/home_screen.dart
-// Main screen for the Orbit app
-// Displays kernel status and allows adding tasks to Marthe
-//
 import 'package:flutter/material.dart';
-import '../api/elysia_api.dart';
-import '../widgets/status_card.dart';
+import '../pages/home_dashboard.dart';
+import '../pages/agenda_page.dart';
+import '../pages/settings_page.dart';
 
 class HomeScreen extends StatefulWidget {
   final String apiBaseUrl;
 
   const HomeScreen({
-    required this.apiBaseUrl,
     super.key,
+    required this.apiBaseUrl,
   });
 
   @override
@@ -19,74 +17,46 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late final ElysiaApi api = ElysiaApi(baseUrl: widget.apiBaseUrl);
+  int index = 0;
 
-  String kernelStatus = "Unknown";
-  bool loading = false;
-  final taskController = TextEditingController();
+  final List<Widget> _pages = [];
 
-  void checkHealth() async {
-    setState(() => loading = true);
-
-    try {
-      final status = await api.health();
-      setState(() => kernelStatus = status);
-    } catch (e) {
-      setState(() => kernelStatus = "Error");
-    }
-
-    setState(() => loading = false);
-  }
-
-  void addTask() async {
-    final name = taskController.text.trim();
-    if (name.isEmpty) return;
-
-    try {
-      await api.addTask(name);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Task \"$name\" added to Marthe.")),
-      );
-      taskController.clear();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
-    }
+  @override
+  void initState() {
+    super.initState();
+    _pages.addAll([
+      const HomeDashboard(),
+      const AgendaPage(),
+      SettingsPage(),
+    ]);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Orbit")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            StatusCard(status: kernelStatus, loading: loading),
-            const SizedBox(height: 20),
-
-            TextField(
-              controller: taskController,
-              decoration: const InputDecoration(
-                labelText: "New task name",
-                border: OutlineInputBorder(),
-              ),
-            ),
-
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: addTask,
-              child: const Text("Add Task to Marthe"),
-            ),
-
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: checkHealth,
-              child: const Text("Check Kernel Status"),
-            ),
-          ],
-        ),
+      body: _pages[index],
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: index,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: "Home",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.calendar_month_outlined),
+            selectedIcon: Icon(Icons.calendar_month),
+            label: "Agenda",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: "Instellingen",
+          ),
+        ],
+        onDestinationSelected: (i) {
+          setState(() => index = i);
+        },
       ),
     );
   }
