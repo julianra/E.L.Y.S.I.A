@@ -44,4 +44,25 @@ class ElysiaApi {
 
     return jsonDecode(res.body) as List<dynamic>;
   }
+
+Future<void> deleteTask(String id) async {
+  final res = await http.delete(Uri.parse('$baseUrl/marthe/task/$id'));
+  if (res.statusCode != 200) {
+    throw Exception("Failed to delete");
+  }
+}
+
+Future<void> updateTask(String id, Map<String, dynamic> data) async {
+  final res = await http.put(
+    Uri.parse('$baseUrl/marthe/task/$id'),
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode(data),
+  );
+
+  if (res.statusCode != 200) {
+    throw Exception("Failed to update");
+  }
+}
+
+
 }

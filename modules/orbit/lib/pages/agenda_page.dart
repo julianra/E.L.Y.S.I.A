@@ -1,6 +1,5 @@
 // lib/pages/agenda_page.dart
 import 'package:flutter/material.dart';
-import 'package:orbit/api/elysia_service.dart';
 import 'package:orbit/pages/agenda_views/day_view.dart';
 import 'package:orbit/pages/agenda_views/month_view.dart';
 import 'package:orbit/pages/agenda_views/week_view.dart'; // zodra file bestaat
@@ -49,16 +48,21 @@ class _AgendaPageState extends State<AgendaPage> with SingleTickerProviderStateM
         controller: _tabController,
         children: [
           DayView(onCreateAtHour: _openAddTask),
-          WeekView(onCreateAtDay: _openAddTask),
+          WeekView(onCreateAt: _openAddTask),
           const MonthView(),
         ],
       ),
 
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blue,
-        onPressed: () => _openAddTask(),
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: GestureDetector(
+  onLongPress: () => Navigator.pushNamed(context, "/add-task"),
+  child: FloatingActionButton(
+    backgroundColor: Colors.blue,
+    onPressed: () => Navigator.pushNamed(context, "/add-quick"),
+    child: const Icon(Icons.add),
+  ),
+),
+
+
     );
   }
 }

@@ -1,3 +1,4 @@
+//lib/models/agenda_item.dart
 class AgendaItem {
   final String id;
   final String name;

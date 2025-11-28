@@ -5,6 +5,10 @@ import 'dart:io';
 import 'screens/server_select_screen.dart';
 import 'screens/home_screen.dart';
 import 'storage/server_storage.dart';
+import 'pages/task_details_page.dart';
+import 'package:orbit/models/agenda_item.dart';
+import 'pages/add_task_quick.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -83,6 +87,7 @@ class _OrbitAppState extends State<OrbitApp> {
   routes: {
     "/select-server": (_) => ServerSelectScreen(onSelected: onServerChosen),
     "/home": (_) => HomeScreen(apiBaseUrl: baseUrl ?? ""),
+"/add-quick": (_) => const AddTaskQuickPage(),
 
     // ➜ HIER TOEVOEGEN
     "/add-task": (context) {
@@ -90,6 +95,21 @@ class _OrbitAppState extends State<OrbitApp> {
       final prefilledStart = args is DateTime ? args : null;
       return AddTaskPage(prefilledStart: prefilledStart);
     },
+   "/task-details": (context) {
+  final args = ModalRoute.of(context)!.settings.arguments;
+
+  if (args == null || args is! AgendaItem) {
+    return const Scaffold(
+      body: Center(
+        child: Text("Geen geldige taak meegegeven"),
+      ),
+    );
+  }
+
+  return TaskDetailsPage(item: args);
+},
+
+
   },
   home: baseUrl == null
       ? ServerSelectScreen(onSelected: onServerChosen)

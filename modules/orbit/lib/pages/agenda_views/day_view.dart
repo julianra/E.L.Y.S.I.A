@@ -1,3 +1,5 @@
+// lib/pages/agenda_views/day_view.dart
+
 import 'package:flutter/material.dart';
 import 'package:orbit/api/elysia_service.dart';
 import 'package:orbit/models/agenda_item.dart';
@@ -12,7 +14,7 @@ class DayView extends StatefulWidget {
 }
 
 class _DayViewState extends State<DayView> {
-  DateTime currentDate = DateTime.now();
+  DateTime current = DateTime.now();
 
   Future<List<AgendaItem>> _load() async {
     final api = await ElysiaService.get();
@@ -20,79 +22,74 @@ class _DayViewState extends State<DayView> {
     return raw.map((e) => AgendaItem.fromJson(e)).toList();
   }
 
-  void _nextDay() => setState(() => currentDate = currentDate.add(const Duration(days: 1)));
-  void _previousDay() => setState(() => currentDate = currentDate.subtract(const Duration(days: 1)));
+  void _nextDay() => setState(() => current = current.add(const Duration(days: 1)));
+  void _previousDay() => setState(() => current = current.subtract(const Duration(days: 1)));
 
   @override
   Widget build(BuildContext context) {
-    final dateLabel = "${currentDate.day}/${currentDate.month}/${currentDate.year}";
+    final title = "${_weekday(current.weekday)} ${current.day}/${current.month}";
 
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            IconButton(onPressed: _previousDay, icon: const Icon(Icons.chevron_left)),
-            Text("Dagweergave – $dateLabel", style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-            IconButton(onPressed: _nextDay, icon: const Icon(Icons.chevron_right)),
-          ],
+        //-------------------- HEADER --------------------
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(onPressed: _previousDay, icon: const Icon(Icons.chevron_left)),
+              Text(
+                title,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              IconButton(onPressed: _nextDay, icon: const Icon(Icons.chevron_right)),
+            ],
+          ),
         ),
 
+        //-------------------- CONTENT --------------------
         Expanded(
           child: FutureBuilder<List<AgendaItem>>(
             future: _load(),
             builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
+              if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
 
-              final tasks = snapshot.data!.where((t) =>
-                t.start.year == currentDate.year &&
-                t.start.month == currentDate.month &&
-                t.start.day == currentDate.day
-              ).toList();
+              final tasks = snapshot.data!
+                  .where((t) =>
+                      t.start.year == current.year &&
+                      t.start.month == current.month &&
+                      t.start.day == current.day)
+                  .toList()
+                ..sort((a, b) => a.start.compareTo(b.start));
 
-              return ListView.builder(
-                itemCount: 24,
-                itemBuilder: (context, hour) {
-                  final hourTasks = tasks.where((t) => t.start.hour == hour).toList();
-
-                  return GestureDetector(
-                    onTap: () {
-                      final dt = DateTime(
-                        currentDate.year,
-                        currentDate.month,
-                        currentDate.day,
-                        hour,
-                      );
-                      widget.onCreateAtHour(dt);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(color: Colors.grey.shade300),
+              return ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  // Geen taken → klik om toe te voegen
+                  if (tasks.isEmpty)
+                    GestureDetector(
+                      onTap: () => widget.onCreateAtHour(current),
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white10,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            "Geen taken — tik om toe te voegen",
+                            style: TextStyle(color: Colors.white70),
+                          ),
                         ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("$hour:00", style: const TextStyle(fontWeight: FontWeight.bold)),
-                          for (var task in hourTasks)
-                            Container(
-                              margin: const EdgeInsets.only(top: 6),
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.shade100,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(task.name),
-                            ),
-                        ],
-                      ),
                     ),
-                  );
-                },
+
+                  // Taken
+                  for (var task in tasks) _buildTask(context, task),
+
+                  const SizedBox(height: 40),
+                ],
               );
             },
           ),
@@ -100,4 +97,48 @@ class _DayViewState extends State<DayView> {
       ],
     );
   }
+
+  //------------------- TASK TILE -------------------
+  Widget _buildTask(BuildContext context, AgendaItem item) {
+    final start = "${_two(item.start.hour)}:${_two(item.start.minute)}";
+    final end = "${_two(item.end.hour)}:${_two(item.end.minute)}";
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          "/task-details",
+          arguments: item,
+        ).then((_) => setState(() {}));
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.blue.shade600,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.access_time, size: 20, color: Colors.white),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                "${item.name}\n$start – $end",
+                style: const TextStyle(color: Colors.white, fontSize: 16),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  //------------------- HELPERS -------------------
+  String _weekday(int w) {
+    const d = ["MA", "DI", "WO", "DO", "VR", "ZA", "ZO"];
+    return d[w - 1];
+  }
+
+  String _two(int v) => v.toString().padLeft(2, '0');
 }

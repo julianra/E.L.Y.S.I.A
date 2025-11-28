@@ -1,3 +1,4 @@
+//lib/widgets/status_card.dart
 import 'package:flutter/material.dart';
 
 class StatusCard extends StatelessWidget {
