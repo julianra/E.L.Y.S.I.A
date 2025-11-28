@@ -10,10 +10,6 @@
 //   - Modules kunnen zich abonneren op events
 //   - Kernel toont geregistreerde handlers bij opstart
 // ======================================================================
-// ======================================================================
-// 📍 FILE: elysia_core/src/events.rs
-// ======================================================================
-
 use serde_json::Value;
 use crate::KernelContext;
 use crate::module::ElysiaModule;

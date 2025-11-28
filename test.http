@@ -1,0 +1,90 @@
+### HEALTH CHECK
+GET http://192.168.0.17:3000/health
+
+
+### GET ALL TASKS
+GET http://192.168.0.17:3000/marthe/tasks
+Content-Type: application/json
+
+
+
+################################################################
+# 1. FORWARD PLANNING
+#    exact_start → end wordt automatisch berekend
+################################################################
+POST http://192.168.0.17:3000/agenda/add
+Content-Type: application/json
+
+{
+  "name": "Forward Test",
+  "exact_start": "2025-11-29T13:00:00.000Z",
+  "duration_minutes": 45
+}
+
+
+
+################################################################
+# 2. BACKWARD PLANNING
+#    exact_end → start wordt automatisch berekend
+################################################################
+POST http://192.168.0.17:3000/agenda/add
+Content-Type: application/json
+
+{
+  "name": "Backward Test",
+  "exact_end": "2025-11-29T15:00:00.000Z",
+  "duration_minutes": 30
+}
+
+
+
+################################################################
+# 3. EXACT BLOCK
+#    both exact_start + exact_end → worden gewoon overgenomen
+################################################################
+POST http://192.168.0.17:3000/agenda/add
+Content-Type: application/json
+
+{
+  "name": "Exact Block Test",
+  "exact_start": "2025-11-29T10:00:00.000Z",
+  "exact_end": "2025-11-29T10:30:00.000Z"
+}
+
+
+
+################################################################
+# 4. DEADLINE PLANNING
+#    taak moet vóór deadline passen (backward slot search)
+################################################################
+POST http://192.168.0.17:3000/agenda/add
+Content-Type: application/json
+
+{
+  "name": "Deadline Test",
+  "deadline_end": "2025-11-29T18:00:00.000Z",
+  "duration_minutes": 60
+}
+
+
+
+################################################################
+# 5. FREE PLANNING
+#    geen start, geen einde, geen deadline → first free slot
+################################################################
+POST http://192.168.0.17:3000/agenda/add
+Content-Type: application/json
+
+{
+  "name": "Free Planning Test",
+  "duration_minutes": 20
+}
+
+
+
+################################################################
+# 6. GET ALL TASKS AGAIN
+#    controleer de resultaten
+################################################################
+GET http://192.168.0.17:3000/marthe/tasks
+Content-Type: application/json

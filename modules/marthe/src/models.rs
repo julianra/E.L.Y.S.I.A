@@ -1,11 +1,16 @@
 // ======================================================================
 // 📍 FILE: modules/marthe/src/models.rs
+//
+// 📝 Beschrijving:
+//   Datamodel voor een agenda-item in MARTHE.
+//   - bevat optionele start, end, duration, deadline
+//   - bevat helperfuncties voor tijdslogica
 // ======================================================================
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use chrono::{DateTime, Local, Duration, Timelike};
-
+use log::{error};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AgendaItem {
@@ -31,6 +36,11 @@ pub struct AgendaItem {
 
     #[serde(default)]
     pub energy_cost: Option<i64>,
+
+    /// Deadline waarop deze taak ten laatste klaar moet zijn.
+    /// ISO8601 / RFC3339 string (bv. "2025-11-29T18:00:00Z")
+    #[serde(default)]
+    pub deadline_end: Option<String>,
 }
 
 impl AgendaItem {
@@ -38,6 +48,36 @@ impl AgendaItem {
         Uuid::new_v4().to_string()
     }
 
+    /// Probeert verschillende datetime-formaten te parsen naar DateTime<Local>.
+    pub fn parse_datetime(s: &str) -> Option<DateTime<Local>> {
+        // 1. Standaard RFC3339 / ISO8601
+        if let Ok(dt) = DateTime::parse_from_rfc3339(s) {
+            return Some(dt.with_timezone(&Local));
+        }
+
+        // 2. Met fractie + Z
+        if let Ok(dt) = DateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S%.fZ") {
+            return Some(dt.with_timezone(&Local));
+        }
+
+        // 3. Met fractie zonder Z
+        if let Ok(dt) = DateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S%.f") {
+            return Some(dt.with_timezone(&Local));
+        }
+
+        // 4. Zonder seconden
+        if let Ok(dt) = DateTime::parse_from_str(s, "%Y-%m-%dT%H:%M") {
+            return Some(dt.with_timezone(&Local));
+        }
+
+        error!("[MARTHE] Failed to parse datetime '{}'", s);
+        None
+    }
+
+    /// Vult ontbrekende velden aan met defaults:
+    /// - duration_minutes → 15 min
+    /// - exact_start → nu, of morgen 09:00 als het na 22u is
+    /// - exact_end → exact_start + duration
     pub fn fill_defaults(&mut self) {
         let now: DateTime<Local> = Local::now();
 
@@ -46,33 +86,54 @@ impl AgendaItem {
         }
 
         if self.exact_start.is_none() {
-            // logica: als het na 22u is → morgen om 9u
             if now.hour() >= 22 {
                 let tomorrow = now.date_naive().succ_opt().unwrap();
                 let dt = tomorrow.and_hms_opt(9, 0, 0).unwrap();
-                self.exact_start = Some(
-    DateTime::<Local>::from_naive_utc_and_offset(dt, *Local::now().offset()).to_rfc3339()
-);
-
+                let local_dt = DateTime::<Local>::from_naive_utc_and_offset(
+                    dt,
+                    *Local::now().offset()
+                );
+                self.exact_start = Some(local_dt.to_rfc3339());
             } else {
                 self.exact_start = Some(now.to_rfc3339());
-
             }
         }
 
         if self.exact_end.is_none() {
             if let Some(dur) = self.duration_minutes {
-                let start = match DateTime::parse_from_rfc3339(self.exact_start.as_ref().unwrap()) {
-    Ok(dt) => dt.with_timezone(&Local),
-    Err(e) => {
-        log::error!("[MARTHE] Failed to parse exact_start: {}", e);
-        return;
-    }
-};
-
-
-                self.exact_end = Some((start + Duration::minutes(dur)).to_string());
+                if let Some(start_str) = &self.exact_start {
+                    if let Some(start) = Self::parse_datetime(start_str) {
+                        self.exact_end = Some((start + Duration::minutes(dur)).to_rfc3339());
+                    }
+                }
             }
         }
+    }
+
+    /// Checkt of twee taken elkaar overlappen.
+    pub fn overlaps(&self, other: &AgendaItem) -> bool {
+        let Some(a_start_str) = &self.exact_start else { return false };
+        let Some(a_end_str)   = &self.exact_end   else { return false };
+        let Some(b_start_str) = &other.exact_start else { return false };
+        let Some(b_end_str)   = &other.exact_end   else { return false };
+
+        let a_start = match Self::parse_datetime(a_start_str) {
+            Some(v) => v,
+            None => return false,
+        };
+        let a_end = match Self::parse_datetime(a_end_str) {
+            Some(v) => v,
+            None => return false,
+        };
+        let b_start = match Self::parse_datetime(b_start_str) {
+            Some(v) => v,
+            None => return false,
+        };
+        let b_end = match Self::parse_datetime(b_end_str) {
+            Some(v) => v,
+            None => return false,
+        };
+
+        !(a_end <= b_start || b_end <= a_start)
     }
 }

@@ -4,9 +4,6 @@
 // 📝 BESCHRIJVING:
 //   Houdt metadata en database-verbinding bij voor ALLE modules.
 // ======================================================================
-// ======================================================================
-// 📍 FILE: elysia_core/src/context.rs
-// ======================================================================
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};

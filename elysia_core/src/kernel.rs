@@ -13,8 +13,6 @@
 //   - Module background-taken starten
 //   - Kernel runtime draaien (voor nu: dummy loop)
 // ======================================================================
-// 📍 FILE: elysia_core/src/kernel.rs
-// ======================================================================
 
 use crate::{KernelContext, Router, EventBus, ElysiaModule};
 use thiserror::Error;
