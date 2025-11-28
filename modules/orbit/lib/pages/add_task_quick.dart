@@ -1,7 +1,9 @@
-//lib/pages/add_task_quick.dart
+// lib/pages/add_task_quick.dart
 
 import 'package:flutter/material.dart';
 import 'package:orbit/api/elysia_service.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:permission_handler/permission_handler.dart';
 
 class AddTaskQuickPage extends StatefulWidget {
   const AddTaskQuickPage({super.key});
@@ -14,17 +16,73 @@ class _AddTaskQuickPageState extends State<AddTaskQuickPage> {
   final textController = TextEditingController();
   bool loading = false;
 
+  late stt.SpeechToText speech;
   bool isListening = false;
 
   @override
   void initState() {
     super.initState();
+    speech = stt.SpeechToText();
   }
 
   // ----------------------------------------------------------
-  // START / STOP SPEECH
+  // CHECK PERMISSION
   // ----------------------------------------------------------
- 
+  Future<bool> _checkPermission() async {
+    var status = await Permission.microphone.status;
+
+    if (status.isDenied) {
+      status = await Permission.microphone.request();
+    }
+
+    if (!status.isGranted) {
+      print("❌ Microphone permission NOT granted");
+      return false;
+    }
+
+    print("🎤 Microphone permission granted");
+    return true;
+  }
+
+  // ----------------------------------------------------------
+  // START LISTENING
+  // ----------------------------------------------------------
+  Future<void> _startListening() async {
+    if (!await _checkPermission()) return;
+
+    bool available = await speech.initialize(
+      onStatus: (status) => print("STATUS: $status"),
+      onError: (e) => print("ERROR: $e"),
+    );
+
+    if (!available) {
+      print("❌ Speech not available");
+      return;
+    }
+
+    setState(() => isListening = true);
+
+    speech.listen(
+      localeId: "nl_BE",
+      onResult: (result) {
+        setState(() {
+          textController.text = result.recognizedWords;
+        });
+      },
+    );
+
+    print("🎙️ Listening started...");
+  }
+
+  // ----------------------------------------------------------
+  // STOP LISTENING
+  // ----------------------------------------------------------
+  Future<void> _stopListening() async {
+    await speech.stop();
+    setState(() => isListening = false);
+    print("🛑 Listening stopped");
+  }
+
   // ----------------------------------------------------------
   // SUBMIT TASK
   // ----------------------------------------------------------
@@ -42,6 +100,9 @@ class _AddTaskQuickPageState extends State<AddTaskQuickPage> {
     Navigator.pop(context);
   }
 
+  // ----------------------------------------------------------
+  // UI BUILD
+  // ----------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -63,10 +124,10 @@ class _AddTaskQuickPageState extends State<AddTaskQuickPage> {
 
             const SizedBox(height: 20),
 
-            // ------------------------------
-            // MICROPHONE BUTTON
-            // ------------------------------
+            // HOLD MIC
             GestureDetector(
+              onLongPressStart: (_) => _startListening(),
+              onLongPressEnd: (_) => _stopListening(),
               child: Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
@@ -83,9 +144,6 @@ class _AddTaskQuickPageState extends State<AddTaskQuickPage> {
 
             const SizedBox(height: 20),
 
-            // ------------------------------
-            // SAVE BUTTON
-            // ------------------------------
             ElevatedButton(
               onPressed: loading ? null : _submit,
               style: ElevatedButton.styleFrom(
