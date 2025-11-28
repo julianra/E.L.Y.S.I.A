@@ -1,91 +1,103 @@
-// lib/pages/agenda_views/day_view.dart
 import 'package:flutter/material.dart';
+import 'package:orbit/api/elysia_service.dart';
+import 'package:orbit/models/agenda_item.dart';
 
-class DayView extends StatelessWidget {
-  const DayView({super.key});
+class DayView extends StatefulWidget {
+  final Function(DateTime) onCreateAtHour;
+
+  const DayView({super.key, required this.onCreateAtHour});
+
+  @override
+  State<DayView> createState() => _DayViewState();
+}
+
+class _DayViewState extends State<DayView> {
+  DateTime currentDate = DateTime.now();
+
+  Future<List<AgendaItem>> _load() async {
+    final api = await ElysiaService.get();
+    final raw = await api.getTasks();
+    return raw.map((e) => AgendaItem.fromJson(e)).toList();
+  }
+
+  void _nextDay() => setState(() => currentDate = currentDate.add(const Duration(days: 1)));
+  void _previousDay() => setState(() => currentDate = currentDate.subtract(const Duration(days: 1)));
 
   @override
   Widget build(BuildContext context) {
-    // Fictieve events – later koppelen we dit aan Marthe
-    final events = [
-      _DayEvent("📘 Studeren", 10, 1.5),
-      _DayEvent("🏋️ Fitness", 14, 1),
-      _DayEvent("🧹 Opruimen", 18, 0.5),
-    ];
+    final dateLabel = "${currentDate.day}/${currentDate.month}/${currentDate.year}";
 
-    return ListView.builder(
-      itemCount: 24,
-      itemBuilder: (context, hour) {
-        final label = "${hour.toString().padLeft(2, '0')}:00";
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(onPressed: _previousDay, icon: const Icon(Icons.chevron_left)),
+            Text("Dagweergave – $dateLabel", style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+            IconButton(onPressed: _nextDay, icon: const Icon(Icons.chevron_right)),
+          ],
+        ),
 
-        // events die op dit uur starten
-        final hourEvents = events.where((e) => e.startHour.floor() == hour);
+        Expanded(
+          child: FutureBuilder<List<AgendaItem>>(
+            future: _load(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-        return SizedBox(
-          height: 70,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Tijd-kolom
-              SizedBox(
-                width: 60,
-                child: Align(
-                  alignment: Alignment.topRight,
-                  child: Text(
-                    label,
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-                ),
-              ),
+              final tasks = snapshot.data!.where((t) =>
+                t.start.year == currentDate.year &&
+                t.start.month == currentDate.month &&
+                t.start.day == currentDate.day
+              ).toList();
 
-              // Hoofd-kolom
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(color: Colors.grey.shade800),
-                    ),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                  child: Stack(
-                    children: [
-                      // (later: achtergrond of current time marker)
-                      ...hourEvents.map(
-                        (e) => Align(
-                          alignment: Alignment.topLeft,
-                          child: Container(
-                            height: 60 * e.durationHours, // simpele hoogte
-                            decoration: BoxDecoration(
-                              color: Colors.blue.withOpacity(0.7),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            padding: const EdgeInsets.all(6),
-                            child: Text(
-                              e.title,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
+              return ListView.builder(
+                itemCount: 24,
+                itemBuilder: (context, hour) {
+                  final hourTasks = tasks.where((t) => t.start.hour == hour).toList();
+
+                  return GestureDetector(
+                    onTap: () {
+                      final dt = DateTime(
+                        currentDate.year,
+                        currentDate.month,
+                        currentDate.day,
+                        hour,
+                      );
+                      widget.onCreateAtHour(dt);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Colors.grey.shade300),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("$hour:00", style: const TextStyle(fontWeight: FontWeight.bold)),
+                          for (var task in hourTasks)
+                            Container(
+                              margin: const EdgeInsets.only(top: 6),
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade100,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(task.name),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
           ),
-        );
-      },
+        ),
+      ],
     );
   }
-}
-
-class _DayEvent {
-  final String title;
-  final double startHour; // bijv 10.0, 14.0
-  final double durationHours;
-
-  _DayEvent(this.title, this.startHour, this.durationHours);
 }

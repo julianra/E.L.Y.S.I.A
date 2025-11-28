@@ -1,3 +1,5 @@
+// lib/api/elysia_api.dart
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -6,28 +8,40 @@ class ElysiaApi {
 
   ElysiaApi({required this.baseUrl});
 
+  // ---------------------------
   // GET /health
-  Future<String> health() async {
+  // ---------------------------
+  Future<bool> health() async {
     final res = await http.get(Uri.parse('$baseUrl/health'));
-
-    if (res.statusCode != 200) {
-      throw Exception("Health check failed: ${res.body}");
-    }
-
-    final data = jsonDecode(res.body);
-    return data["status"] ?? "unknown";
+    return res.statusCode == 200;
   }
 
-  // POST /marthe/add_task
-  Future<void> addTask(String name) async {
+  // ---------------------------
+  // POST /agenda/add
+  // (correct endpoint)
+  // ---------------------------
+  Future<void> addTask(Map<String, dynamic> payload) async {
     final res = await http.post(
-      Uri.parse('$baseUrl/marthe/add_task'),
+      Uri.parse('$baseUrl/agenda/add'),
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"name": name}),
+      body: jsonEncode(payload),
     );
 
     if (res.statusCode != 200) {
       throw Exception("Failed to add task: ${res.body}");
     }
+  }
+
+  // ---------------------------
+  // GET /marthe/tasks
+  // ---------------------------
+  Future<List<dynamic>> getTasks() async {
+    final res = await http.get(Uri.parse('$baseUrl/marthe/tasks'));
+
+    if (res.statusCode != 200) {
+      throw Exception("Failed to fetch tasks");
+    }
+
+    return jsonDecode(res.body) as List<dynamic>;
   }
 }

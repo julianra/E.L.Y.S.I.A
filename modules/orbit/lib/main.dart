@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:orbit/pages/add_task_page.dart';
 import 'dart:io';
 
 import 'screens/server_select_screen.dart';
@@ -76,16 +77,23 @@ class _OrbitAppState extends State<OrbitApp> {
     }
 
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: "Orbit",
-      theme: ThemeData.dark(),
-      routes: {
-        "/select-server": (_) => ServerSelectScreen(onSelected: onServerChosen),
-        "/home": (_) => HomeScreen(apiBaseUrl: baseUrl ?? ""),
-      },
-      home: baseUrl == null
-          ? ServerSelectScreen(onSelected: onServerChosen)
-          : HomeScreen(apiBaseUrl: baseUrl!),
-    );
-  }
-}
+  debugShowCheckedModeBanner: false,
+  title: "Orbit",
+  theme: ThemeData.dark(),
+  routes: {
+    "/select-server": (_) => ServerSelectScreen(onSelected: onServerChosen),
+    "/home": (_) => HomeScreen(apiBaseUrl: baseUrl ?? ""),
+
+    // ➜ HIER TOEVOEGEN
+    "/add-task": (context) {
+      final args = ModalRoute.of(context)!.settings.arguments;
+      final prefilledStart = args is DateTime ? args : null;
+      return AddTaskPage(prefilledStart: prefilledStart);
+    },
+  },
+  home: baseUrl == null
+      ? ServerSelectScreen(onSelected: onServerChosen)
+      : HomeScreen(apiBaseUrl: baseUrl!),
+);
+
+}}
