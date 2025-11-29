@@ -2,13 +2,11 @@
 # 📍 FILE: elysia/kernel/Cargo.toml
 #
 # 📝 BESCHRIJVING:
-#   Dit is de manifest van de "kernel" binary crate.
-#   De kernel is de ENTRYPOINT van het ELYSIA-systeem.
+#   Kernel entrypoint van ELYSIA
 #
 # 🔧 TAKEN:
-#   - Definieert kernel als executable crate (met main.rs)
-#   - Maakt kernel afhankelijk van elysia_core (de motor)
-#   - Laat jou `cargo run -p kernel` uitvoeren
+#   - Laadt elysia_core (dat op zijn beurt elysia_ai laadt)
+#   - Laadt modules (Marthe, later CARE/SHIELD/JUNK…)
 # ================================================================
 
 [package]
@@ -19,4 +17,6 @@ edition = "2021"
 [dependencies]
 elysia_core = { path = "../elysia_core" }
 log = "0.4"
-marthe = {path = "../modules/marthe"}
+
+# Modules:
+marthe = { path = "../modules/marthe" }

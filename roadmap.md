@@ -1,257 +1,187 @@
-🚀 E.L.Y.S.I.A. Roadmap (Fase 1 → Fase 4)
+🚀 E.L.Y.S.I.A. Roadmap 2025–2027 (Fase 1 → Fase 4)
 
-We splitsen het in 4 logische fases:
+Volledig geüpdatet — inclusief D.O.O.D.O. + CARE + SHIELD
 
-🟦 FASE 1 — Lokale basis stabiel krijgen
+🟦 FASE 1 — Lokale Basis Stabiel Krijgen
 
-(waar je nu bent)
+(Huidige fase – je zit exact hier)
 
-✔️ 1. Kernel stabiliseren
+Alle stappen in Fase 1 kloppen perfect.
+Niets moet aangepast worden.
+CARE & SHIELD zitten pas vanaf Fase 2–4 in de pipeline.
 
-Database
+🟩 FASE 2 — Echte Functionaliteit Bouwen
 
-Migraties
+(Hier komen de eerste upgrades)
 
-Modules auto-discovery
+🔥 Nieuw: Integratie van CARE + SHIELD in Fase 2
+➕ Toevoegen aan Fase 2:
+7. C.A.R.E. – Basis Integratie (Nieuw)
 
-Route-registratie
+Cognitive & Assistive Reality Engine
 
-Event bus
+Functies fase 2:
 
-Logging
+Realtime ondertiteling via Orbit
 
-Boot sequence
+Basis Whisper integratie
 
-👉 klaar
+Live transcriptie venster in UI
 
-✔️ 2. Orbit (Flutter) basis
+Microfoon test
 
-Projectstructuur klaar
+Simplify-mode
 
-Kan kernel status testen (/health)
+Captions voor dysfasie
 
-Kan tasks sturen naar Marthe
+Tekstlog → JUNK
 
-👉 momenteel bezig
+→ Bepaalt hier nog GEEN AR overlays, dat komt in Fase 4.
 
-✔️ 3. Marthe basis-API
+8. S.H.I.E.L.D. – Basis Safety Engine (Nieuw)
 
-Implementeren:
+Safety, Hazard Intelligence & Emergency Live Detection
 
-POST /marthe/add_task
+Functies fase 2:
 
-Database insert
+Smoke/gas/CO2 sensor ingest (via CATNIP)
 
-Test data opvragen
+Basismeldingen → Orbit
 
-✔️ 4. Orbit UI: taken toevoegen & lijst tonen
+Logging naar J.U.N.K.
 
-Textfield → taak toevoegen
+Kernel alarms → console logs
 
-Lijst van taken ophalen
+Threshold configuratie
 
-TaskCard widget
+Waterlek basics
 
-JSON → models → UI
+→ Nog GEEN automatische acties, AR, of panic-mode → dat komt in Fase 3–4.
 
-✔️ 5. Lokale discovery
+🟧 FASE 3 — Multi-Node, Edge & Automatisering
 
-Kernel broadcast via mDNS: elysia.local
+Hier moeten een paar kleine upgrades gebeuren omdat SHIELD en CARE nu officieel modules zijn.
 
-Orbit → automatische detectie
+Pas dit toe binnen Fase 3:
+🔥 4. Node-communicatie (Uitgebreid)
 
-Fallback: manual server input
+Nodes wisselen nu ook deze modules uit:
 
-Opslaan in SharedPreferences
+MARTHE
 
-👉 Dit is extreem belangrijk voor gebruiksgemak.
+JUNK
 
-🟩 FASE 2 — Echte functionaliteit bouwen
-✔️ 1. Datamodel Marthe afwerken
+CATNIP
 
-Een agenda-item bevat:
+DOODO
 
-naam
+SHIELD
 
-beschrijving
+CARE
 
-starttijd
+Orbit kiest dynamisch:
 
-eindtijd
+veiligheidsnode → SHIELD
 
-duur
+assistive node → CARE
 
-categorie
+contextnode → SCOUT
 
-project
+maker node → FORGE
 
-energiebelasting
+planner node → MARTHE
 
-prioriteit
+🔥 5. SHIELD Automatisaties – Fase 3
 
-locatie
+Lampen knipperen via CATNIP
 
-type (taak, afspraak, deadline)
+Automatische ventilatie
 
-recurring
+Soft panic alerts
 
-AI properties (importanceScore, emotionalLoad)
+Node fail-safe detection
 
-We maken een schema:
+Multi-node redundantie (twee nodes als SHIELD fallback)
 
-marthe_tasks
-marthe_timeblocks
-marthe_recurrence
-marthe_logs
+Drempelwaarden sync tussen nodes
 
-✔️ 2. API uitbreiden voor Orbit
+🔥 6. CARE Multi-node Fase 3
 
-/marthe/tasks (get all)
+Whisper kan op eender welke node draaien
 
-/marthe/task/{id} (details)
+Orbit kiest automatisch snelste node
 
-/marthe/delete/{id}
+Systeem stuurt transcripties via EventBus over netwerk
 
-/marthe/update/{id}
+Basis energy-aware transcript scheduling (via DOODO)
 
-✔️ 3. Orbit UI
+🟪 FASE 4 — Veiligheid, Remote, B2B & ELYSIA OS
 
-3 views:
+Hier gebeuren de grootste upgrades voor CARE en SHIELD.
 
-Dag
+Wat moet worden toegevoegd?
+🔥 CARE Fase 4: AR + Assistive Revolution
 
-Week
+AR-overlay voor captions (smartglasses)
 
-Maand
+Live “Simplify Language” bubbles
 
-Net zoals Google Calendar + jouw eigen twist.
+Object-herkenning voor slechtzienden
 
-✔️ 4. Slimme planner — eerste versie
+Emotie-visualisatie
 
-conflict detectie
+CARE Profiles (dysfasie, slechthorend, ADHD, etc.)
 
-slimme suggesties wanneer te plannen
+Realtime environment mapping via SCOUT
 
-notificaties
+CARE visual kernel in ELYSIA OS
 
-categorievolgorde
+🔥 SHIELD Fase 4: Complete Safety System
 
-energieprofiel meenemen
+Full panic-mode
 
-deadlines automatisch verspreiden (time blocking)
+Noodcontacten
 
-✔️ 5. J.U.N.K Analytics basic integratie
+Fall-detection met IMU
 
-meten van gebruik
+Gas/CO/rook scenario’s
 
-trends herkennen
+Intrusion detection
 
-voorspellen hoe lang je taken DOEN er echt duren
+Automatisch lampen/rolluiken
 
-betere planning
+Automatische ventilatie / afsluiten
 
-🟧 FASE 3 — Lokale multi-node + edge computing
-✔️ 1. Kernel + modules op meerdere devices
+SHIELD Dashboard in Supervisor
 
-Laptop
+AR evacuatie overlay via CARE
 
-Raspberry Pi
+Emergency Edge routing:
 
-Oude pc
+mocht 1 node uitvallen neemt een andere over
 
-Linux server
+🔥 ELYSIA OS Fase 4
 
-NAS
+Niets moet worden gewijzigd — enkel uitbreiden:
 
-✔️ 2. Orbit → server select scherm
+E.L.Y.S.I.A. OS bevat dan:
 
-automatisch detecteren
+MARTHE
 
-manueel toevoegen
+DOODO
 
-nodes een naam geven: “Thuis”, “Kantoor”, “Atelier”
+JUNK
 
-✔️ 3. Node-communicatie
+CATNIP
 
-Eventbus uitbreiden over netwerk
+SCOUT
 
-Module-capabilities uitwisselen
+HAVEN
 
-Syncing tussen nodes
+ARIA
 
-Dn krijg je bv:
+ORBIT
 
-ELYSIA-Home → CATNIP
-ELYSIA-PC → MARTHE
-ELYSIA-NAS → JUNK
+CARE kernel + AR engine
 
-Orbit kan kiezen welke server hij bestuurt.
-
-🟪 FASE 4 — Remote Veiligheid + B2B + ELYSIA OS
-✔️ 1. Remote access (super veilig)
-
-Niet nu — maar hier.
-
-Opties:
-
-Tailscale (simpel & ultraveilig → 10 minuten setup)
-
-ELYSIA Cloud Relay (professioneel)
-
-Caddy reverse proxy + HTTPS
-
-Token-based authentication
-
-End-to-end encryptie
-
-✔️ 2. ELYSIA Supervisor
-
-Beheer van:
-
-updates
-
-modules installeren
-
-backup / restore
-
-log viewer
-
-systeemstatus
-
-gebruikersaccounts
-
-✔️ 3. ELYSIA OS Distro
-
-Gebaseerd op:
-
-Alpine Linux
-
-Arch + systemd
-
-Buildroot (embedded)
-
-Wordt een OS zoals Home Assistant OS:
-
-Flashable image
-
-OTA-updates
-
-Node discovery
-
-Modules geïsoleerd
-
-Logging
-
-I/O drivers
-
-Dashboard
-
-✔️ 4. ELYSIA Node Hardware (commercieel)
-
-Je eigen product:
-
-ELYSIA Home Node
-
-ELYSIA Pro Node
-
-ELYSIA Micro Node
+SHIELD kernel + safety engine

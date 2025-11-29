@@ -20,10 +20,11 @@ pub mod db_init;
 pub mod db;
 pub mod mdns;
 pub mod http;
+pub use elysia_ai::*;
 
 
 pub use crate::kernel::Kernel;
 pub use crate::module::ElysiaModule;
-pub use crate::context::KernelContext;
+pub use crate::context::KernelContext;  
 pub use crate::router::Router;
 pub use crate::events::EventBus;

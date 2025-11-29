@@ -1,0 +1,8 @@
+[package]
+name = "ai_test"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+elysia_ai = { path = "../elysia_ai" }
+tokio = { version = "1", features = ["full"] }

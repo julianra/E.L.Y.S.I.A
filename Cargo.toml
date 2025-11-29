@@ -17,6 +17,6 @@ members = [
     "kernel",
     "elysia_core",
     "modules/marthe"
-]
+, "ai_test"]
 
 resolver = "2"

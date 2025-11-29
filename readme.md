@@ -1,315 +1,447 @@
-🧠 ELYSIA Modules – Overzicht & Afkortingen
-🔷 E.L.Y.S.I.A.
+🧠 E.L.Y.S.I.A. – Volledige Module- & Master Overzicht (2025 Update)
+
+Inclusief C.A.R.E. & S.H.I.E.L.D.
+
+🔷 E.L.Y.S.I.A. — Centrale Kern
 
 Enhanced Lifestyle Yielding Self-Improving Assistant
-→ Centrale AI-kern. Bewustzijn, besluitvorming, taakverdeling en veiligheid.
+→ Het overkoepelende AI-bewustzijn dat alles verbindt, aanstuurt, voorspelt, beveiligt en personaliseert.
 
+Taken:
+
+Besluitvorming op hoog niveau
+
+Contextanalyse (tijd, locatie, gedrag, stress)
+
+Veiligheid & prioriteiten
+
+Coördinatie van alle modules
+
+Offline AI-modellen
+
+Eventbus + mDNS + lokale communicatie
+
+Persoonlijkheid: kalm, adviserend, moederlijk
+
+💠 CORE MODULES
 🔶 M.A.R.T.H.E.
 
 Multidimensional Agenda Reasoning & Task Handling Engine
-→ Planner: agenda, conflictoplossing, routines, taken, energiebeheer.
+→ De planner van je leven.
 
-🐾 C.A.T.N.I.P.
+Functies:
 
-Connected Automation & Telemetry Network Integration Protocol
-→ Domotica/IoT-laag: ESP32, sensoren, Home Assistant, MQTT.
+Agenda, taken, deadlines
 
+Conflict detectie & automatische herschikking
+
+Routines & wekelijkse doelen
+
+Energiebeheer (via D.O.O.D.O.)
+
+Voorspellend plannen op basis van gedrag
+
+Persoonlijkheid: Sarcastisch, praktisch, slimme opmerkingen.
+💤 D.O.O.D.O.
+
+Digital Oracle Of Dreams & Oneness
+→ Slaap, energie, balans, welzijn.
+
+Functies:
+
+Slaaptracking (met of zonder wearables)
+
+Stressdetectie & cooldowns
+
+Mood tracking
+
+Focus cycles
+
+Energieadvies voor MARTHE
+
+Zen-routines
+
+Persoonlijkheid: Spiritueel, rustgevend.
 💾 J.U.N.K.
 
 Journaled Unified Nexus of Knowledge
-→ Geheugen en analytics: logs, dataverzameling, routines, rapporten.
+→ Geheugen, logs, data-analyse, levenspatronen.
 
-🟣 O.R.B.I.T.
+Functies:
 
-Operational Relay Between Interfaces & Tasks
-→ Flutter-app (mobiel + web): agenda UI, notificaties, user interface.
+Volledige levenslogging (opt-in)
 
-🏡 H.A.V.E.N.
+Dag-/week-/maandrapporten
 
-Home Automation Virtual Environment Node
-→ Smart-home comfortlaag: verlichting, klimaat, scenes, veiligheid.
+Trendanalyses
 
-💰 F.I.N.N.
+Gewoontes herkennen
 
-Financial Intelligence, Numbers & Negotiation
-→ Budget, inkomsten/uitgaven, schuldenbeheer, automatische analyses.
+Context doorgeven aan CORE
 
+Persoonlijkheid: Cynisch, nuchter, scherp.
 🔍 S.C.O.U.T.
 
 Systemic Context Observation & User Tracking
-→ Contextbewustzijn: locatie, gewoontes, patronen, aanbevelingen.
+→ Locatie, gedrag, aanwezigheid.
 
+Functies:
+
+Thuis/weg-detectie
+
+Bewegingsanalyse
+
+Leren van patronen
+
+Binnenshuis navigatie
+
+Contextdata doorgeven aan MARTHE, CARE, SHIELD
+
+🏡 DOMOTICA & OMGEVING
+🐾 C.A.T.N.I.P.
+
+Connected Automation & Telemetry Network Integration Protocol
+→ Hardwarebrug & IoT zenuwstelsel.
+
+Functies:
+
+ESP32-netwerk
+
+MQTT, sensoren, actuatoren
+
+Home Assistant integratie
+
+Telemetrie → JUNK
+
+Device discovery
+
+Persoonlijkheid: Speels, nieuwsgierig.
+🏡 H.A.V.E.N.
+
+Home Automation Virtual Environment Node
+→ Comfortlaag.
+
+Functies:
+
+Scènes (movie night, sleep, wake-up)
+
+Klimaat, verlichting, audio
+
+Adaptive home behaviour
+
+Energiebesparing
+
+🛡️ S.H.I.E.L.D. (Nieuw)
+
+Safety, Hazard Intelligence & Emergency Live Detection
+→ Veiligheidsmodule van ELYSIA.
+
+Functies:
+
+Brand, rook, gas, CO/CO₂ detectie
+
+Inbraakdetectie
+
+Waterlekken
+
+Valdetectie (IMU)
+
+Paniekknoppen
+
+Alarmscenario’s
+
+Realtime waarschuwingen naar Orbit + CARE (AR)
+
+Automatische CATNIP-acties (lichten, ventilatie, afsluiters)
+
+Persoonlijkheid: Waakzaam, kalm, beschermend.
+🧑‍⚕️ C.A.R.E. (Nieuw)
+
+Cognitive & Assistive Reality Engine
+→ Hulpmiddelen voor handicaps & assistieve technologie.
+
+Functies:
+
+Realtime ondertitels (dysfasie)
+
+Live vertaling
+
+Simplify mode (eenvoudige taal)
+
+AR overlays op smartglasses
+
+Object-detectie voor slechtzienden
+
+Auditieve → visuele alerts
+
+Focus en cognitieve ondersteuning
+
+Integratie via CATNIP, MARTHE en SHIELD
+
+Persoonlijkheid: Zacht, empathisch, helper.
+🎨 MAKER & PRODUCTIE
 🔧 F.O.R.G.E.
 
 Fabrication, Operation, Rendering & Generation Engine
-→ Maker-control: 3D-printers, CNC, lasers, projectbeheer.
+→ Automatisatie voor creatie & productie.
 
-🎭 A.R.I.A.
+Functies:
 
-Adaptive Response & Interaction Avatar
-→ Stem, persoonlijkheid en communicatie-interface (TTS/Whisper).
+3D-printers, lasers, CNC
 
+Automatische slicing & queue management
+
+Onderhoudsdetectie
+
+Workflow van STL → print → afwerking
+
+Maker-dashboard
+
+💰 FINANCIËLE MODULE
+💰 F.I.N.N.
+
+Financial Intelligence, Numbers & Negotiation
+→ Geld, budget, planning.
+
+Functies:
+
+Uitzgavenanalyse
+
+Schuldenoverzicht
+
+Budgettering
+
+Financiële voorspellingen
+
+Tips voor inkomstenverhoging
+
+Integratie met MARTHE (betalingsherinneringen)
+
+🚗 MOBILITEIT
 🧭 N.A.V.I.
 
 Navigation & Autonomous Vehicle Interface
-→ Routing, mobiliteit, fietsdata, autoplan, carpooling, locatieplanning.
+→ Routes, verkeer, mobiliteit.
 
+Functies:
+
+Slimme routeplanning
+
+Carpooloptimalisatie
+
+Fietsdata/ESP32 tracking
+
+Reisplanning via MARTHE
+
+Verkeersmeldingen
+
+📦 SYSTEMEN, INSTALLATIE & BACKUPS
 📦 P.A.C.K.
 
 Provisioning, Automation, Configuration & Kits
-→ Installatiebeheer, updates, modules deployen, OTA, provisioning.
+→ Deployments & updates.
+
+Functies:
+
+OTA firmware updates
+
+Installatie van modules
+
+Netwerk provisioning
+
+Module kits (ready-to-install)
 
 📁 A.R.C.
 
 Archive & Retrieval Core
-→ Documenten, bestanden, imports (Google Takeout, social media).
+→ Complete documentbibliotheek.
 
+Functies:
 
-🌐 E.L.Y.S.I.A. — Projectoverzicht (Master Summary)
+Google Takeout imports
+
+Social media import
+
+Documentherkenning
+
+OCR
+
+Archiefbeheer & zoekfunctie
+
+🗣 COMMUNICATIE & INTERFACE
+🎭 A.R.I.A.
+
+Adaptive Response & Interaction Avatar
+→ Voice AI.
+
+Functies:
+
+TTS
+
+Realtime Whisper STT
+
+Contextueel antwoorden
+
+Persoonlijkheid + avatar
+
+Emotion aware responses
+
+🟣 O.R.B.I.T.
+
+Operational Relay Between Interfaces & Tasks
+→ Flutter App (UI & front-end hub).
+
+Functies:
+
+Agenda
+
+Taken
+
+Domotica
+
+SHIELD waarschuwingen
+
+CARE captioning feed
+
+Dashboard & status
+
+Multi-device synchronisatie
+
+Instellingen voor elke module
+
+🌐 MASTER SUMMARY — E.L.Y.S.I.A.
 1️⃣ Wat is ELYSIA?
 
-E.L.Y.S.I.A. = Enhanced Lifestyle Yielding Self-Improving Assistant
-Een volledig offline-capabele, modulaire, AI-gestuurde levensassistent die:
+Een offline modulaire AI-assistent die:
 
-plant (agenda, taken, routines)
+plant (MARTHE)
 
-automatiseert (domotica, sensoren, IoT)
+beschermt (SHIELD)
 
-leert uit data (patronen, gewoontes, rapporten)
+ondersteunt (CARE)
 
-systemen aandrijft (hardware, software, 3D, Unity)
+automatiseert (CATNIP/HAVEN)
 
-je huis, werk en projecten organiseert
+leert (JUNK)
 
-realtime beslissingen kan nemen
+monitort (DOODO)
 
-uitbreidbaar/verkoopbaar is per module
+analyseert (FINN/SCOUT)
 
-2️⃣ Doel van het project (Uiteindelijke visie)
+creëert (FORGE)
 
-De ultieme versie van ELYSIA is:
+bestuurt huis & hardware
 
-🧠 Een persoonlijke AI die jou écht kent
+biedt assistive AR via CARE
 
-begrijpt je energie, humeur, ritme
+integreert via ORBIT
 
-plant automatisch je dagen optimaal
+2️⃣ De Ultieme Visie
 
-lost agenda-conflicten op
+🧠 Een AI die jou als persoon kent → ritme, emoties, energie.
+🏡 Een volledig autonoom slim huis.
+🛠 Maker-automatisatie tot high-end productielijn.
+📱 Commercieel: modulair & lokaal → uniek op de markt.
+💼 Inzetbaar in gezinnen, bedrijven, makerspaces, zorgsector.
 
-voorspelt werkdruk & stress
+3️⃣ Module-overzicht (kort & snel)
 
-🏡 Een volledig geautomatiseerd huis
+MARTHE – Planner
+DOODO – Energie & slaap
+CATNIP – Hardware/IoT
+JUNK – Geheugen
+SCOUT – Context
+SHIELD – Veiligheid
+CARE – Handicap assistentie & AR
+HAVEN – Comfort
+FINN – Financiën
+FORGE – Maker automatisatie
+NAVI – Mobiliteit
+ARIA – Voice
+PACK – Installatie
+ARC – Archief
+ORBIT – UI
 
-domotica volledig via jouw modules
+4️⃣ Financieel Plan
+Fase 1 (0–12 maanden)
 
-offline, lokaal, veilig
+Modules verkopen (MARTHE, CATNIP, CARE, SHIELD)
 
-AR-visualisatie van installaties & voortgang
+Makerproducten
 
-automatische detectie van sfeer, temperatuur, vocht, beweging
+Freelancing (Flutter, Rust, ESP32, AI)
 
-💼 Een product voor de markt
+Installaties & configuratie
 
-modulair: klanten kopen enkel wat ze nodig hebben
+Doel: €1.500–€2.500 p/m
 
-volledig offline en privacy-first (uniek verkoopargument!)
+Fase 2 (1–3 jaar)
 
-inzetbaar bij gezinnen, bedrijven, werkplaatsen, productiehallen
+ELYSIA Home Pack
 
-🎨 Een maker-ecosysteem
+ELYSIA Care Pack (SHIELD + CARE voor zorgsector)
 
-ESP32-hardware
+Workshops
 
-3D-print-componenten
+Smartglasses integratie
 
-Unity/AR-visualisaties
+Doel: €3.000–€6.000 p/m
 
-automatisatie van jouw 3D-serie en creatieve projecten
+Fase 3 (3–5 jaar)
 
-3️⃣ Module-overzicht (beknopt)
+Licenties
 
-(Volledige lijst apart, maar hier kort)
+Hardwarebundels
 
-E.L.Y.S.I.A. – centrale AI-hersenen
+Trainer programma
 
-MARTHE – planner + agenda + conflictoplossing
+Marketplace plugins
 
-CATNIP – IoT & home automation
+Doel: €8.000+ p/m
 
-JUNK – data, logs & gewoontes
+5️⃣ Partners & Collaborations
 
-ORBIT – Flutter-app UI
+Marthe → UI, visuals
 
-HAVEN – smart-home comfort
+Elias → lore, design
 
-FINN – geldbeheer
+Makerspaces
 
-SCOUT – context & locatie
+Scholen (educatie)
 
-FORGE – 3D-printers, CNC, laser
+Zorginstellingen voor CARE/SHIELD
 
-ARIA – stem/avatar
+Kleine KMO’s voor automations
 
-NAVi – mobiliteit & planning
-
-PACK – provisioning, OTA
-
-ARC – archief & imports
-
-4️⃣ Financieel Plan (Realistisch, haalbaar en schaalbaar)
-Fase 1 — Directe inkomsten (0–12 maanden)
-
-Doelen: cashflow, stabiliteit, eerste klanten.
-
-✔ Verkoop van losse modules (MARTHE, CATNIP, FINN, SCOUT)
-✔ Maker-producten: resin, 3D-prints, LED-cubes, DIY-kits
-✔ Freelance opdrachten:
-
-Flutter app
-
-Unity/AR
-
-AI-automatisatie
-
-Hardware-installatie (ESP32/home automation)
-
-✔ Kleine consults: “Installeer ELYSIA in mijn huis”
-
-Doel: €1.500–€2.500 per maand via losse projecten
-
-Fase 2 — Grotere structuur (1–3 jaar)
-
-Doelen: stabiel inkomen, schaalbare business.
-
-✔ ELYSIA Home Pack
-
-planner + domotica + energy monitor
-
-€399–€999 voor installatie + €10–€20/maand lokaal onderhoud
-
-✔ ELYSIA Business Pack
-
-planning + IoT + AR-opvolging voor magazijnen
-
-€49–€199 per maand
-
-✔ Educatie & workshops
-
-3D-printen
-
-Arduino/ESP32
-
-Blender
-
-Unity
-
-AI-automatisatie
-
-Doel: €3.000–€6.000 per maand
-
-Fase 3 — Volledige commercialisering (3–5 jaar)
-
-Een verkoopbaar AI-ecosysteem:
-
-licenties per module
-
-one-click offline installer
-
-marketplace voor plugins
-
-hardwarebundels
-
-training & certificatieprogramma’s
-
-Doel: €8.000+ per maand, schaalbaar tot een bedrijf van 6–10 mensen.
-
-5️⃣ Partner & Collaboratie Plan
-🎨 Marthe (directe creatieve partner)
-
-UI/UX
-
-concept art
-
-2D/3D texturing
-
-branding & packaging
-
-resin productlijn visueel afwerken
-
-social media visuals
-
-🎭 Elias (creatief directeur + verhaalontwikkeling)
-
-lore & wereldbouw (3D-animatieproject)
-
-karakterdesign
-
-scenario’s
-
-stijl & direction
-
-🛠 Andere samenwerkingen
-
-Lokale makers voor hardware
-
-Sporthallen & jeugdwerkingen → AR + zwerkbalproject
-
-Lokaal bedrijfsleven → IoT, planning, magazijnen
-
-Scholen → lessenpakketten ESP32 + AI
-
-🌍 Toekomst:
-
-Partners voor
-
-marketing
-
-legal & privacy
-
-investeringen
-
-uitbreiden naar kleine KMO’s
-
-6️⃣ Waarom dit project werkt (Unique Selling Points)
-✔ Volledig offline — 0% cloud afhankelijk
-
-→ Geen enkele concurrent doet dit.
-
-✔ Volledig modulair
-
-→ Klant kiest exact wat hij nodig heeft.
-
-✔ Hardware + software + AI + AR gecombineerd
-
-→ Quasi geen concurrentie in België.
-
-✔ Te verkopen als pakket, module of dienst
-
-→ Lage instap, brede markt.
-
-✔ Sterke creatieve branding
-
-→ Door Marthe + jouw wereld/lore voelt dit uniek.
-
-✔ Je bouwt iets dat 100% in jouw skillset past
-
-→ coding, hardware, 3D, AI, automation, storytelling.
+6️⃣ Waarom ELYSIA werkt
+
+✔ 100% lokaal (uniek in Europa)
+✔ Modulair → betaalbaar & schaalbaar
+✔ AI + hardware + AR in één ecosysteem
+✔ Fantastische branding
+✔ Perfect afgestemd op jouw skillset & visie
+✔ Later als product/bedrijf schaalbaar
 
 7️⃣ Einddoel
 
 Een volledig autonoom AI-ecosysteem dat:
 
-jouw leven organiseert
+je leven organiseert
 
-je huis bestuurt
+je huis beschermt
 
-je projecten managet
+je routine optimaliseert
 
-je financiën optimaliseert
+je productie versnelt
 
-je routines analyseert
+je financiën beheert
 
-en je carrière ondersteunt
+je slaap & gezondheid monitort
 
-… én dat je kan vermarkten als product of service zodat je er volledig je inkomen mee kan verdienen.
+je handicaps ondersteunt via CARE
+
+je huis veilig houdt via SHIELD
+
+je creativiteit versterkt via FORGE
+
+en commercieel inzetbaar is
