@@ -1,8 +1,7 @@
 // ======================================================================
 // 📍 FILE: elysia_core/src/context.rs
 //
-// 📝 BESCHRIJVING:
-//   Houdt metadata en database-verbinding bij voor ALLE modules.
+// 📝 KernelContext met DB + Meta + AI
 // ======================================================================
 
 use std::collections::HashMap;
@@ -11,17 +10,24 @@ use std::sync::{Arc, RwLock};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 
+use elysia_ai::AiKernel;
+
 #[derive(Clone)]
 pub struct KernelContext {
     pub db_pool: Arc<Pool<SqliteConnectionManager>>,
     pub meta: Arc<RwLock<HashMap<String, String>>>,
+    pub ai: Arc<AiKernel>,
 }
 
 impl KernelContext {
-    pub fn new(db_pool: Pool<SqliteConnectionManager>) -> Self {
+    pub fn new(
+        db_pool: Pool<SqliteConnectionManager>,
+        ai: Arc<AiKernel>
+    ) -> Self {
         KernelContext {
             db_pool: Arc::new(db_pool),
             meta: Arc::new(RwLock::new(HashMap::new())),
+            ai,
         }
     }
 

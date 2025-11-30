@@ -1,6 +1,10 @@
 // ======================================================================
 // 📍 FILE: ai_test/src/main.rs
+//
+// 📝 Zelfstandig testprogramma om de AI-kernel uit te proberen
 // ======================================================================
+
+use std::sync::Arc;
 
 use elysia_ai::{
     AiKernel,
@@ -12,16 +16,20 @@ use elysia_ai::{
 async fn main() {
     println!("=== AI KERNEL TEST ===");
 
-    // Backend met defaults
-    let backend = OllamaBackend::new();
-    let ai = AiKernel::new(Box::new(backend));
+    // Backend aanmaken (Ollama)
+    let backend = Arc::new(OllamaBackend::new());
 
+    // AI-kernel initialiseren (start health-check + autostart Ollama)
+    let ai = AiKernel::new(backend);
+
+    // Testzin
     let text = "ik moet morgen jari bellen over zijn eindwerk";
 
+    // Intent uitvoeren
     match ai.send(AiIntent::MartheParseTask, text).await {
-        Ok(res) => {
+        Ok(response) => {
             println!("\n[AI RESPONSE]");
-            println!("{res}");
+            println!("{}", response);
         }
         Err(e) => {
             println!("\n[AI ERROR]");
