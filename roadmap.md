@@ -1,71 +1,153 @@
-🚀 E.L.Y.S.I.A. Roadmap 2025–2027 (Fase 1 → Fase 4)
+🚀 E.L.Y.S.I.A. Roadmap 2025–2027
 
-Volledig geüpdatet — inclusief D.O.O.D.O. + CARE + SHIELD
+Volledige, geüpdatete versie (inclusief CARE + SHIELD + DOODO + Orbit)
+Fase 1 → Fase 4 – Definitief
 
-🟦 FASE 1 — Lokale Basis Stabiel Krijgen
+🟦 FASE 1 — Lokale Basis Stabiel (HUIDIG)
 
-(Huidige fase – je zit exact hier)
+De fundering van ELYSIA OS
 
-Alle stappen in Fase 1 kloppen perfect.
-Niets moet aangepast worden.
-CARE & SHIELD zitten pas vanaf Fase 2–4 in de pipeline.
+✔️ Kernel
 
-🟩 FASE 2 — Echte Functionaliteit Bouwen
+SQLite database
 
-(Hier komen de eerste upgrades)
+Module discovery
 
-🔥 Nieuw: Integratie van CARE + SHIELD in Fase 2
-➕ Toevoegen aan Fase 2:
-7. C.A.R.E. – Basis Integratie (Nieuw)
+Route registratie
+
+EventBus (sync & async)
+
+Logging + module labels
+
+mDNS node discovery
+
+Crash-vrije boot sequence
+
+✔️ Orbit
+
+Projectstructuur
+
+Server detectie (mDNS)
+
+/health check
+
+Verbindingen opslaan
+
+Server-select UI
+
+✔️ MARTHE v1
+
+POST /marthe/add_task
+
+JSON validatie
+
+Tijd parsing
+
+Taken opslaan in DB
+
+Orbit UI: taken toevoegen + lijst
+
+✔️ D.O.O.D.O. Integratie
+
+Decision Oriented Optimization & Dynamic Orchestration
+
+Energie + netwerk awareness groundwork
+
+Basismetrics opgeslagen in Kernel
+
+👉 STATUS: volledig op schema — geen wijzigingen nodig
+
+🟩 FASE 2 — Echte Functionaliteit
+
+ELYSIA leert écht denken en reageren
+
+1. MARTHE v2
+
+Slimme tagging
+
+Task parsing via AI
+
+Automatische groepsdetectie
+
+Voorstel van datum → Orbit
+
+2. JUNK v1
+
+Memory index
+
+Semantic search
+
+AI reranking
+
+Auto-facts extractie
+
+3. CATNIP v1
+
+Apparaten (ESP32, sensoren, relais)
+
+Status ingest
+
+Orbit device list view
+
+Kernel events
+
+4. Orbit v2
+
+Dag, week, maand, jaarweergave
+
+Agenda klik-acties
+
+Task details
+
+5. DOODO v2
+
+Node metrics
+
+Predictive scheduling
+
+Warm/cold modelplanning
+
+🔥 7. CARE – Basis Integratie (NIEUW in Fase 2)
 
 Cognitive & Assistive Reality Engine
 
-Functies fase 2:
-
 Realtime ondertiteling via Orbit
 
-Basis Whisper integratie
+Whisper (CPU/GPU) integratie
 
-Live transcriptie venster in UI
+Live transcriptie UI
 
-Microfoon test
+Microfoontest
 
 Simplify-mode
 
-Captions voor dysfasie
+Captions for dysfasia
 
-Tekstlog → JUNK
+Transcriptie → JUNK memory
 
-→ Bepaalt hier nog GEEN AR overlays, dat komt in Fase 4.
-
-8. S.H.I.E.L.D. – Basis Safety Engine (Nieuw)
+🔥 8. SHIELD – Basis Safety Engine (NIEUW in Fase 2)
 
 Safety, Hazard Intelligence & Emergency Live Detection
 
-Functies fase 2:
+rook/gas/CO2 ingest via CATNIP
 
-Smoke/gas/CO2 sensor ingest (via CATNIP)
+waterlek detectie
 
-Basismeldingen → Orbit
+thresholds configureren
 
-Logging naar J.U.N.K.
+alarmmeldingen naar Orbit
 
-Kernel alarms → console logs
+logging naar JUNK
 
-Threshold configuratie
+kernel-level hazard events
 
-Waterlek basics
+🟧 FASE 3 — Multi-Node, Edge, Automatisering
 
-→ Nog GEEN automatische acties, AR, of panic-mode → dat komt in Fase 3–4.
+ELYSIA begint te leven over meerdere apparaten
 
-🟧 FASE 3 — Multi-Node, Edge & Automatisering
+🔥 4. Uitgebreide Node-Communicatie
 
-Hier moeten een paar kleine upgrades gebeuren omdat SHIELD en CARE nu officieel modules zijn.
-
-Pas dit toe binnen Fase 3:
-🔥 4. Node-communicatie (Uitgebreid)
-
-Nodes wisselen nu ook deze modules uit:
+Nodes wisselen nu deze modules uit:
 
 MARTHE
 
@@ -75,25 +157,23 @@ CATNIP
 
 DOODO
 
+SCOUT
+
 SHIELD
 
 CARE
 
-Orbit kiest dynamisch:
+Orbit kiest automatisch:
 
-veiligheidsnode → SHIELD
+Module	Node
+Veiligheid	SHIELD-node
+Assistive	CARE-node
+Context	SCOUT-node
+Maker	FORGE-node
+Planner	MARTHE-node
+🔥 5. SHIELD Automation (Fase 3)
 
-assistive node → CARE
-
-contextnode → SCOUT
-
-maker node → FORGE
-
-planner node → MARTHE
-
-🔥 5. SHIELD Automatisaties – Fase 3
-
-Lampen knipperen via CATNIP
+Automatisch lampen knipperen
 
 Automatische ventilatie
 
@@ -101,70 +181,61 @@ Soft panic alerts
 
 Node fail-safe detection
 
-Multi-node redundantie (twee nodes als SHIELD fallback)
+Redundantie (twee nodes als fallback)
 
-Drempelwaarden sync tussen nodes
+Sync thresholds tussen nodes
 
-🔥 6. CARE Multi-node Fase 3
+🔥 6. CARE Multi-Node (Fase 3)
 
-Whisper kan op eender welke node draaien
+Whisper draait op snelste node
 
-Orbit kiest automatisch snelste node
+Orbit kiest beste node dynamisch
 
-Systeem stuurt transcripties via EventBus over netwerk
+Transcriptie over EventBus (netwerk)
 
-Basis energy-aware transcript scheduling (via DOODO)
+Energy-aware scheduling (via DOODO)
 
-🟪 FASE 4 — Veiligheid, Remote, B2B & ELYSIA OS
+🟪 FASE 4 — Veiligheid, AR, Remote, Full ELYSIA OS
 
-Hier gebeuren de grootste upgrades voor CARE en SHIELD.
+Hier gebeurt de grote magie
 
-Wat moet worden toegevoegd?
-🔥 CARE Fase 4: AR + Assistive Revolution
+🔥 CARE Fase 4 — Assistive AR Engine
 
-AR-overlay voor captions (smartglasses)
+AR overlays (smartglasses)
 
-Live “Simplify Language” bubbles
+Live Simplify-Bubbles
 
-Object-herkenning voor slechtzienden
+Object herkenning
 
 Emotie-visualisatie
 
-CARE Profiles (dysfasie, slechthorend, ADHD, etc.)
+CARE Profiles (ADHD, dysfasie, slechtzienden, enz.)
 
-Realtime environment mapping via SCOUT
+Environment mapping (SCOUT)
 
-CARE visual kernel in ELYSIA OS
+CARE visual kernel geïntegreerd in ELYSIA OS
 
-🔥 SHIELD Fase 4: Complete Safety System
+🔥 SHIELD Fase 4 — Full Emergency Engine
 
-Full panic-mode
+Panic mode
 
 Noodcontacten
 
-Fall-detection met IMU
+Fall detection (IMU)
 
 Gas/CO/rook scenario’s
 
 Intrusion detection
 
-Automatisch lampen/rolluiken
+Automatische ventilatie / rolluiken / lichten
 
-Automatische ventilatie / afsluiten
-
-SHIELD Dashboard in Supervisor
+Edge routing: fallback naar andere nodes
 
 AR evacuatie overlay via CARE
 
-Emergency Edge routing:
+🔥 ELYSIA OS — Finale versie
 
-mocht 1 node uitvallen neemt een andere over
-
-🔥 ELYSIA OS Fase 4
-
-Niets moet worden gewijzigd — enkel uitbreiden:
-
-E.L.Y.S.I.A. OS bevat dan:
+Bevat dan:
 
 MARTHE
 
@@ -182,6 +253,12 @@ ARIA
 
 ORBIT
 
-CARE kernel + AR engine
+CARE Kernel + AR Engine
 
-SHIELD kernel + safety engine
+SHIELD Kernel + Safety Engine
+
+Multi-node networking
+
+EventBus mesh
+
+Assistive & Safety OS
