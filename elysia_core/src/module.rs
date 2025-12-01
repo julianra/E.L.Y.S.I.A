@@ -4,6 +4,7 @@
 
 use crate::{KernelContext, Router};
 use crate::events::KernelEvent;
+use crate::kernel::KernelState;
 
 // Het basistrait dat ALLE modules moeten implementeren
 pub trait ElysiaModule: Send + Sync {
@@ -13,13 +14,12 @@ pub trait ElysiaModule: Send + Sync {
     fn register_routes(&self, _router: &mut Router) {}
     fn register_event_handlers(&self, _bus: &mut crate::events::EventBus) {}
 
-    fn handle_event(&self, _ctx: &KernelContext, _event: KernelEvent) {}
+    // ⚡ Belangrijk: KernelState i.p.v. KernelContext
+    fn handle_event(&self, _state: &KernelState, _event: KernelEvent) {}
 
-    // Nodig om Box<dyn ElysiaModule> te kunnen klonen
     fn box_clone(&self) -> Box<dyn ElysiaModule>;
 }
 
-// Clone implementeren voor Box<dyn ElysiaModule>
 impl Clone for Box<dyn ElysiaModule> {
     fn clone(&self) -> Box<dyn ElysiaModule> {
         self.box_clone()
@@ -29,7 +29,6 @@ impl Clone for Box<dyn ElysiaModule> {
 // ======================================================================
 // 📌 Macro voor auto-registratie via inventory
 // ======================================================================
-
 pub struct ModuleRegistration {
     pub module: fn() -> Box<dyn ElysiaModule>,
 }

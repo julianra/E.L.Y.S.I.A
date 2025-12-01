@@ -23,6 +23,9 @@ serde_json = "1.0"
 uuid = { version = "1", features = ["v4"] }
 chrono = "0.4"
 rusqlite = { version = "0.29", features = ["chrono"] }
+elysia_ai = { path = "../../elysia_ai" }
+tokio = { version = "1", features = ["rt", "macros"] }
+
 
 [lib]
 crate-type = ["rlib"]

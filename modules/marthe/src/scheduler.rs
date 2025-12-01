@@ -121,31 +121,28 @@ fn deadline_plan(
     date: &str,
     duration: i64
 ) {
-    let deadline_str = item.deadline_end.as_ref().unwrap();
+    let deadline = match parse_dt(item.deadline_end.as_ref().unwrap()) {
+        Some(d) => d,
+        None => return,
+    };
 
-    if let Some(deadline) = parse_dt(deadline_str) {
-        let timeline = build_day_timeline(date, tasks_today);
-        let free = find_free_windows(&timeline);
+    let ideal_start = deadline - Duration::minutes(duration);
 
-        // We zoeken een slot dat eindigt vóór deadline
-        for block in free {
-            let free_start = block.start;
-            let free_end = block.end;
+    // 1 – PROBEER perfecte slot
+    let timeline = build_day_timeline(date, tasks_today);
+    let free = find_free_windows(&timeline);
 
-            // We willen end ≤ deadline
-            let latest_start = deadline - Duration::minutes(duration);
-
-            // Check of dit binnen het block kan
-            if latest_start >= free_start && latest_start + Duration::minutes(duration) <= free_end {
-                item.exact_start = Some(to_rfc(latest_start));
-                item.exact_end   = Some(to_rfc(latest_start + Duration::minutes(duration)));
-                return;
-            }
+    for block in free {
+        if ideal_start >= block.start && ideal_start + Duration::minutes(duration) <= block.end {
+            item.exact_start = Some(to_rfc(ideal_start));
+            item.exact_end = Some(to_rfc(ideal_start + Duration::minutes(duration)));
+            return;
         }
-
-        // Geen plek gevonden → fallback naar first free (kan AI later oplossen)
-        free_plan(item, tasks_today, date, duration);
     }
+
+    // 2 – GEEN plek → forceer deadline
+    item.exact_start = Some(to_rfc(ideal_start));
+    item.exact_end = Some(to_rfc(deadline));
 }
 
 // ======================================================================

@@ -1,18 +1,10 @@
 // ======================================================================
-// 📍 FILE: elysia/elysia_core/src/events.rs
-//
-// 📝 BESCHRIJVING:
-//   Een eenvoudige EventBus voor het registreren van event handlers.
-//   Wordt later uitgebreid naar async message queue.
-//
-// 🔧 TAKEN:
-//   - Registreren van event handlers
-//   - Modules kunnen zich abonneren op events
-//   - Kernel toont geregistreerde handlers bij opstart
+// 📍 FILE: elysia_core/src/events.rs
 // ======================================================================
+
 use serde_json::Value;
-use crate::KernelContext;
 use crate::module::ElysiaModule;
+use crate::kernel::KernelState;
 
 #[derive(Debug, Clone)]
 pub struct KernelEvent {
@@ -38,19 +30,20 @@ impl EventBus {
         self.clone()
     }
 
+    // ⚡ Belangrijk: ctx → state
     pub fn dispatch(
         &self,
         event: KernelEvent,
-        modules: &[Box<dyn ElysiaModule>],
-        ctx: &KernelContext
+        modules: &std::sync::Arc<Vec<Box<dyn ElysiaModule>>>,
+        state: &KernelState
     ) {
         let target = event.name.clone();
 
-        for module in modules {
+        for module in modules.iter() {
             let key = format!("{}.{}", module.name(), target);
 
             if self.handlers.contains(&key) {
-                module.handle_event(ctx, event.clone());
+                module.handle_event(state, event.clone());
             }
         }
     }

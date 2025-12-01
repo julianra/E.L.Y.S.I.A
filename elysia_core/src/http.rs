@@ -9,25 +9,26 @@ pub fn build_router(state: KernelState) -> Router {
     Router::new()
         .route("/health", get(|| async { "OK" }))
         .route("/agenda/add", post({
-            let state = state.clone();
-            move |Json(payload): Json<Value>| {
-                let state = state.clone();
-                async move {
-                    let event = KernelEvent {
-                        name: "task_requested".to_string(),
-                        payload,
-                    };
+    let state = state.clone();
+    move |Json(payload): Json<Value>| {
+        let state = state.clone();
+        async move {
+            let event = KernelEvent {
+                name: "task_requested_raw".to_string(),
+                payload,
+            };
 
-                    state.bus.dispatch(
-                        event,
-                        &state.modules,
-                        &state.ctx
-                    );
+            state.bus.dispatch(
+                event,
+                &state.modules,
+                &state
+            );
 
-                    "OK"
-                }
-            }
-        }))
+            "OK"
+        }
+    }
+}))
+
         .route("/marthe/tasks", get({
     let state = state.clone();
     move || {

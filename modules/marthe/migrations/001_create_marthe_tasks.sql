@@ -1,3 +1,5 @@
+-- modules/marthe/migrations/001_create_marthe_tasks.sql
+
 CREATE TABLE IF NOT EXISTS marthe_tasks (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
