@@ -27,6 +27,8 @@ pub fn build_router(state: KernelState) -> Router {
             "OK"
         }
     }
+
+    
 }))
 
         .route("/marthe/tasks", get({
@@ -63,5 +65,37 @@ pub fn build_router(state: KernelState) -> Router {
         }
     }
 }))
+        // ============================================================
+        // DELETE TASK (MARTHE)
+        // ============================================================
+        .route("/marthe/task/:id", axum::routing::delete({
+            let state = state.clone();
+            move |axum::extract::Path(id): axum::extract::Path<String>| {
+                let state = state.clone();
+                async move {
+                    let conn = state.ctx.db();
+                    let res = conn.execute(
+                        "DELETE FROM marthe_tasks WHERE id = ?",
+                        &[&id]
+                    );
 
+                    match res {
+                        Ok(rows) => {
+                            Json(serde_json::json!({
+                                "status": "ok",
+                                "deleted": rows
+                            }))
+                        }
+                        Err(e) => {
+                            Json(serde_json::json!({
+                                "status": "error",
+                                "message": e.to_string()
+                            }))
+                        }
+                    }
+                }
+            }
+        }))
+
+       
     }

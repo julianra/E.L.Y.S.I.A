@@ -32,7 +32,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
            "${_two(dt.hour)}:${_two(dt.minute)}";
   }
 
-  String _iso(DateTime dt) => dt.toIso8601String();
+String _iso(DateTime dt) => dt.toLocal().toIso8601String();
 
   Future<DateTime?> _pickDateTime(DateTime initial) async {
     final date = await showDatePicker(
