@@ -14,7 +14,7 @@
 //
 // ======================================================================
 
-use chrono::{DateTime, Duration, Local};
+use chrono::{DateTime, Duration, Local,Datelike, Timelike, TimeZone};
 use crate::models::AgendaItem;
 use crate::slot_engine::{build_day_timeline, find_free_windows, find_best_slot_for_minutes};
 
@@ -121,28 +121,37 @@ fn deadline_plan(
     date: &str,
     duration: i64
 ) {
-    let deadline = match parse_dt(item.deadline_end.as_ref().unwrap()) {
+    let deadline_str = item.deadline_end.as_ref().unwrap();
+
+    let deadline = match parse_dt(deadline_str) {
         Some(d) => d,
         None => return,
     };
 
-    let ideal_start = deadline - Duration::minutes(duration);
-
-    // 1 – PROBEER perfecte slot
     let timeline = build_day_timeline(date, tasks_today);
     let free = find_free_windows(&timeline);
 
+    let latest_start = deadline - Duration::minutes(duration);
+
+    // 1) Zoek ideale slot (zoals origineel)
     for block in free {
-        if ideal_start >= block.start && ideal_start + Duration::minutes(duration) <= block.end {
-            item.exact_start = Some(to_rfc(ideal_start));
-            item.exact_end = Some(to_rfc(ideal_start + Duration::minutes(duration)));
+        let free_start = block.start;
+        let free_end = block.end;
+
+        if latest_start >= free_start
+            && latest_start + Duration::minutes(duration) <= free_end
+        {
+            item.exact_start = Some(to_rfc(latest_start));
+            item.exact_end = Some(to_rfc(latest_start + Duration::minutes(duration)));
             return;
         }
     }
 
-    // 2 – GEEN plek → forceer deadline
-    item.exact_start = Some(to_rfc(ideal_start));
+    // ⭐ 2) GEEN plek? → start gewoon op latest_start (HARD DEADLINE MODE)
+    item.exact_start = Some(to_rfc(latest_start));
     item.exact_end = Some(to_rfc(deadline));
+
+    // conflicts are OK → scheduler will flag them
 }
 
 // ======================================================================
@@ -162,4 +171,57 @@ fn free_plan(
         item.exact_start = Some(to_rfc(start));
         item.exact_end   = Some(to_rfc(start + Duration::minutes(duration)));
     }
+}
+
+pub fn expand_range_if_needed(item: &AgendaItem) -> Vec<AgendaItem> {
+    // Alleen expanden als start en end bestaan
+    let Some(start_str) = &item.exact_start else { return vec![item.clone()]; };
+    let Some(end_str)   = &item.exact_end   else { return vec![item.clone()]; };
+
+    let Some(start) = AgendaItem::parse_datetime(start_str) else { return vec![item.clone()]; };
+    let Some(end)   = AgendaItem::parse_datetime(end_str)   else { return vec![item.clone()]; };
+
+    // Minder dan 12 uren? → geen multi-day
+    if end - start < Duration::hours(12) {
+        return vec![item.clone()];
+    }
+
+    let mut current = start.date_naive();
+    let final_date  = end.date_naive();
+
+    let start_t = start.time();
+    let end_t   = end.time();
+
+    let mut results = Vec::new();
+
+    while current <= final_date {
+        let weekday = current.weekday().number_from_monday(); // ma=1..zo=7
+
+        // Alleen weekdagen
+        if weekday <= 5 {
+            // Bouw NaiveDateTime voor deze dag
+            let start_naive = current
+                .and_hms_opt(start_t.hour(), start_t.minute(), start_t.second())
+                .unwrap();
+
+            let end_naive = current
+                .and_hms_opt(end_t.hour(), end_t.minute(), end_t.second())
+                .unwrap();
+
+            // ⭐ ECHTE FIX: NaiveDateTime naar LOCAL ZONDER UTC HACK
+            let start_dt = Local.from_local_datetime(&start_naive).single().unwrap();
+            let end_dt   = Local.from_local_datetime(&end_naive).single().unwrap();
+
+            let mut sub = item.clone();
+            sub.id = AgendaItem::default_id();
+            sub.exact_start = Some(start_dt.to_rfc3339());
+            sub.exact_end   = Some(end_dt.to_rfc3339());
+
+            results.push(sub);
+        }
+
+        current = current.succ_opt().unwrap();
+    }
+
+    results
 }

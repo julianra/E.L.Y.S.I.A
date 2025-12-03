@@ -8,38 +8,68 @@
 use crate::models::AgendaItem;
 use elysia_core::KernelContext;
 use rusqlite::Row;
+use crate::scheduler::expand_range_if_needed;
+
 
 // -------------------------------------------------------------
 // SAVE TASK
 // -------------------------------------------------------------
 pub fn save_task(ctx: &KernelContext, item: &AgendaItem) -> Result<(), String> {
+    use crate::scheduler::expand_range_if_needed;
+
     let conn = ctx.db();
 
-    conn.execute(
-        "INSERT INTO marthe_tasks (
-            id,
-            name,
-            duration_minutes,
-            exact_start,
-            exact_end,
-            priority,
-            location,
-            energy_cost,
-            deadline_end
-        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
-        (
-            &item.id,
-            &item.name,
-            &item.duration_minutes,
-            &item.exact_start,
-            &item.exact_end,
-            &item.priority,
-            &item.location,
-            &item.energy_cost,
-            &item.deadline_end,
-        ),
-    )
-    .map_err(|e| e.to_string())?;
+    // ⭐ BELANGRIJK: eerst range-expansion uitvoeren
+    let expanded = expand_range_if_needed(item);
+
+    // daarna in loop opslaan:
+    for mut task in expanded {
+        // 2) Normaliseer timestamps (offset fix)
+        if let Some(start) = &task.exact_start {
+            if let Some(dt) = AgendaItem::parse_datetime(start) {
+                task.exact_start = Some(dt.to_rfc3339());
+            }
+        }
+
+        if let Some(end) = &task.exact_end {
+            if let Some(dt) = AgendaItem::parse_datetime(end) {
+                task.exact_end = Some(dt.to_rfc3339());
+            }
+        }
+
+        if let Some(deadline) = &task.deadline_end {
+            if let Some(dt) = AgendaItem::parse_datetime(deadline) {
+                task.deadline_end = Some(dt.to_rfc3339());
+            }
+        }
+
+        // 3) Opslaan
+        conn.execute(
+            "INSERT INTO marthe_tasks (
+                id,
+                name,
+                duration_minutes,
+                exact_start,
+                exact_end,
+                priority,
+                location,
+                energy_cost,
+                deadline_end
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            (
+                &task.id,
+                &task.name,
+                &task.duration_minutes,
+                &task.exact_start,
+                &task.exact_end,
+                &task.priority,
+                &task.location,
+                &task.energy_cost,
+                &task.deadline_end,
+            ),
+        )
+        .map_err(|e| e.to_string())?;
+    }
 
     Ok(())
 }
@@ -93,7 +123,30 @@ pub fn load_tasks_for_day(ctx: &KernelContext, date: &str) -> Result<Vec<AgendaI
 
     for row_result in rows {
         match row_result {
-            Ok(item) => items.push(item),
+            Ok(mut item) => {
+                // -----------------------------------------------------
+                // NORMALIZE LOADED TIMESTAMPS (important for Orbit)
+                // -----------------------------------------------------
+                if let Some(start) = &item.exact_start {
+                    if let Some(dt) = AgendaItem::parse_datetime(start) {
+                        item.exact_start = Some(dt.to_rfc3339());
+                    }
+                }
+
+                if let Some(end) = &item.exact_end {
+                    if let Some(dt) = AgendaItem::parse_datetime(end) {
+                        item.exact_end = Some(dt.to_rfc3339());
+                    }
+                }
+
+                if let Some(deadline) = &item.deadline_end {
+                    if let Some(dt) = AgendaItem::parse_datetime(deadline) {
+                        item.deadline_end = Some(dt.to_rfc3339());
+                    }
+                }
+
+                items.push(item)
+            }
             Err(e) => return Err(e.to_string()),
         }
     }

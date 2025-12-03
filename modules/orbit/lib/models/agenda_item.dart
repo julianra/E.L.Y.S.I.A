@@ -1,4 +1,5 @@
-//lib/models/agenda_item.dart
+// lib/models/agenda_item.dart
+
 class AgendaItem {
   final String id;
   final String name;
@@ -18,8 +19,8 @@ class AgendaItem {
     return AgendaItem(
       id: json["id"],
       name: json["name"],
-      start: DateTime.parse(json["exact_start"]),
-      end: DateTime.parse(json["exact_end"]),
+      start: DateTime.parse(json["exact_start"]).toLocal(),
+      end: DateTime.parse(json["exact_end"]).toLocal(),
       durationMinutes: json["duration_minutes"],
     );
   }

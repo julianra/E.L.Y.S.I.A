@@ -9,7 +9,7 @@
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::{DateTime, Local, Duration, Timelike};
+use chrono::{DateTime, Local, Duration, Timelike, TimeZone};
 use log::{error};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -49,30 +49,18 @@ impl AgendaItem {
     }
 
     /// Probeert verschillende datetime-formaten te parsen naar DateTime<Local>.
-    pub fn parse_datetime(s: &str) -> Option<DateTime<Local>> {
-        // 1. Standaard RFC3339 / ISO8601
-        if let Ok(dt) = DateTime::parse_from_rfc3339(s) {
-            return Some(dt.with_timezone(&Local));
-        }
-
-        // 2. Met fractie + Z
-        if let Ok(dt) = DateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S%.fZ") {
-            return Some(dt.with_timezone(&Local));
-        }
-
-        // 3. Met fractie zonder Z
-        if let Ok(dt) = DateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S%.f") {
-            return Some(dt.with_timezone(&Local));
-        }
-
-        // 4. Zonder seconden
-        if let Ok(dt) = DateTime::parse_from_str(s, "%Y-%m-%dT%H:%M") {
-            return Some(dt.with_timezone(&Local));
-        }
-
-        error!("[MARTHE] Failed to parse datetime '{}'", s);
-        None
+ pub fn parse_datetime(s: &str) -> Option<DateTime<Local>> {
+    // 1) Volledig correct RFC3339 (+01:00, Z, offsets, alles)
+    if let Ok(dt) = DateTime::parse_from_rfc3339(s) {
+        return Some(dt.with_timezone(&Local));
     }
+
+    // (OPTIONEEL) Hier kun je custom patterns zetten, maar is eigenlijk NIET nodig.
+    // AI retourneert ALTIJD valide RFC3339.
+
+    log::error!("[MARTHE] Failed to parse datetime '{}'", s);
+    None
+}
 
     /// Vult ontbrekende velden aan met defaults:
     /// - duration_minutes → 15 min

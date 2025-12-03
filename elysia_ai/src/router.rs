@@ -40,7 +40,7 @@ impl AiRouter {
             // --------------------------------------------------------
             // MARTHE task parsing (STRICT JSON)
             // --------------------------------------------------------
-            AiIntent::MartheParseTask => format!(
+AiIntent::MartheParseTask => format!(
 r#"
 You are a deterministic Dutch → structured task parser.
 
@@ -77,9 +77,9 @@ Interpret rule:
 
 Examples:
 If today_date = 2025-12-01 (Monday):
-- “vrijdag”       → 2025-12-05
-- “zondag”        → 2025-12-07
-- “vorige vrijdag” → 2025-11-28
+- “vrijdag”         → 2025-12-05
+- “zondag”          → 2025-12-07
+- “vorige vrijdag”  → 2025-11-28
 
 ----------------------------------------------
 “VOLGENDE WEEK <weekday>” RULES (IMPORTANT):
@@ -94,6 +94,97 @@ Examples (today_date = 2025-12-01):
 - “volgende week maandag” → 2025-12-08
 - “volgende week vrijdag” → 2025-12-12
 
+----------------------------------------
+MULTI-DAY RANGE RULES (VERY IMPORTANT):
+----------------------------------------
+If the user says ANYTHING implying repeated days:
+- “elke dag”
+- “iedere dag”
+- “alle dagen”
+- “elke weekdag”
+- “van maandag tot vrijdag”
+- “volgende week elke dag”
+- “de hele week”
+- “heel de week”
+- “elke dag van volgende week”
+- “doorheen de week”
+
+Then you MUST interpret this as a RANGE.
+
+RULES FOR RANGE CREATION:
+
+1. Range Start:
+- If “volgende week” is present → range_start = next Monday after today_date.
+- If “elke weekdag” → range_start = next Monday.
+- If “elke dag” → range_start = the next logical day from context.
+- If “van maandag tot vrijdag” → range_start = the next Monday instance.
+
+2. Range End:
+- “elke dag” → 7 days after range_start.
+- “elke weekdag” → the upcoming Friday of that same week.
+- “volgende week” → Monday → Sunday of that next week.
+- “van maandag tot vrijdag” → literal Friday.
+
+3. Time of day:
+If user says: “van 8 tot 4”
+→ Use these times for ALL days in the range:
+  exact_start = <range_start>T08:00:00+01:00
+  exact_end   = <range_end>T16:00:00+01:00
+
+4. NO DEADLINES for multi-day expressions.
+- Set exact_start and exact_end directly.
+- Do NOT generate deadline_end for ranges.
+
+5. Duration:
+If user gives a daily range “8 tot 4”, ignore duration detection.
+Let the scheduler compute per day after expansion.
+----------------------------------------
+EXPLICIT TIME RANGE OVERRIDE (CRITICAL)
+----------------------------------------
+If the user gives an explicit time range like:
+- “van 8 tot 4”
+- “van 08:00 tot 16:00”
+- “van 7u tot 12u”
+
+Then DO NOT use implicit interpretations.
+You MUST map the times EXACTLY:
+
+- “8” or “8u” → 08:00
+- “4” or “4u” → 16:00
+
+Explicit ranges ALWAYS override morning/afternoon rules.
+
+----------------------------------------
+MULTI-DAY RANGE – WEEKDAY RULES (MANDATORY):
+----------------------------------------
+If the user says any variation of:
+
+- “elke weekdag”
+- “iedere weekdag”
+- “alle weekdagen”
+- “elke dag van volgende week”
+- “volgende week elke weekdag”
+- “de hele week werken”
+- “heel de week”
+- “van maandag tot vrijdag”
+
+Then you MUST:
+
+1. Range start = NEXT MONDAY after today_date.
+   Example: if today_date = 2025-12-03 (Wednesday), next Monday = 2025-12-08.
+
+2. Range end = THE SAME WEEK’S FRIDAY.
+   Example: 2025-12-12.
+
+3. Time block:
+   - If user gives “van 8 tot 4”, apply these times for ALL days.
+
+4. NEVER use this week’s Thursday/Friday if “volgende week” is mentioned.
+   ALWAYS use next week’s Monday as the anchor.
+   
+   
+   5. NEVER choose start dates inside the current week for "volgende week" expressions.
+
 --------------------------------
 TIME OF DAY INTERPRETATION:
 --------------------------------
@@ -103,11 +194,11 @@ TIME OF DAY INTERPRETATION:
 - “om 8 uur 's avonds” → 20:00
 
 Implicit times:
-- “ochtend” = 09:00
-- “namiddag” = 15:00
-- “avond” = 19:00
-- “nacht” = 23:00
-- “vanavond” = today_date at 20:00 (unless time stated)
+- “ochtend”   = 09:00
+- “namiddag”  = 15:00
+- “avond”     = 19:00
+- “nacht”     = 23:00
+- “vanavond”  = today_date at 20:00 unless explicit time given
 
 ----------------------------------
 DEADLINE LANGUAGE RULES:
@@ -118,35 +209,32 @@ If user says:
 - “moet af zijn om X”
 - “deadline om X”
 - “klaar zijn met … voor X”
-→ This MUST create: "deadline_end"
+→ MUST create: "deadline_end".
 
 If ALSO a duration is detected:
-→ exact_start = deadline_end - duration
+→ exact_start = deadline_end - duration.
 
-If NO duration detected:
-→ duration_minutes = 15 (default)
-→ exact_start may be null (planner will place it)
+If NO duration:
+→ duration_minutes = 15 and leave exact_start null.
 
 ---------------------------------
 DURATION RULES (Dutch parsing):
 ---------------------------------
-Detect statements like:
+Detect:
 - “duurt 2 uur”
 - “ongeveer 1 uur”
 - “half uurtje”
 - “30 minuten”
 - “anderhalf uur”
-- “nog 2 uur werken”
 - “2u werk”
 
 Convert:
-- 1 uur → 60 min
-- half uur → 30 min
-- anderhalf uur → 90 min
-- 2 uur → 120 min
-- 2u → 120 min
+- 1 uur      → 60
+- half uur   → 30
+- anderhalf  → 90
+- 2 uur / 2u → 120
 
-If duration missing → duration_minutes = 15
+Missing duration → duration_minutes = 15.
 
 ----------------------------------
 OUTPUT JSON FORMAT (MANDATORY):
@@ -172,6 +260,7 @@ INPUT YOU MUST PARSE:
 Return ONLY the JSON object.
 "#
 ),
+
 
             // --------------------------------------------------------
             // KEYWORD extraction
