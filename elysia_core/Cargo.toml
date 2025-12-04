@@ -19,7 +19,10 @@ edition = "2024"
 log = "0.4"
 env_logger = "0.11"
 thiserror = "1"
-inventory = "0.1"
+
+# Inventory module registratie
+inventory = { version = "0.1"}
+
 
 # SQLite + pool
 rusqlite = { version = "0.29", features = ["bundled"] }
@@ -35,8 +38,8 @@ local-ip-address = "0.5"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
-# 🔥 NIEUW: AI-kernel integratie
 elysia_ai = { path = "../elysia_ai" }
+
 
 [lib]
 proc-macro = false

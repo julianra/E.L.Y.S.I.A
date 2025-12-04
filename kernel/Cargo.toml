@@ -1,12 +1,5 @@
 # ================================================================
 # 📍 FILE: elysia/kernel/Cargo.toml
-#
-# 📝 BESCHRIJVING:
-#   Kernel entrypoint van ELYSIA
-#
-# 🔧 TAKEN:
-#   - Laadt elysia_core (dat op zijn beurt elysia_ai laadt)
-#   - Laadt modules (Marthe, later CARE/SHIELD/JUNK…)
 # ================================================================
 
 [package]
@@ -16,7 +9,14 @@ edition = "2021"
 
 [dependencies]
 elysia_core = { path = "../elysia_core" }
-log = "0.4"
 
-# Modules:
+# logging
+log = "0.4"
+env_logger = "0.11"
+
+# async runtime
+tokio = { version = "1", features = ["full"] }
+
+# modules
 marthe = { path = "../modules/marthe" }
+portal = { path = "../modules/portal" }

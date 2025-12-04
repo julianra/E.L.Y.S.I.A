@@ -16,7 +16,11 @@
 members = [
     "kernel",
     "elysia_core",
-    "modules/marthe"
-, "ai_test"]
+    "modules/marthe",
+    "modules/portal",
+    "ai_test"
+]
 
-resolver = "2"
+# 🔥 CRUCIAAL: inventory moet hier staan!
+[workspace.dependencies]
+inventory = "0.1"

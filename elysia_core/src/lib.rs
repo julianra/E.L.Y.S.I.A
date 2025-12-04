@@ -28,3 +28,27 @@ pub use crate::module::ElysiaModule;
 pub use crate::context::KernelContext;  
 pub use crate::router::Router;
 pub use crate::events::EventBus;
+
+pub async fn node_start() -> Result<(), String> {
+    use axum::{Router, routing::get};
+    use tokio::net::TcpListener;
+    use log::info;
+
+    let port = 7070;
+    let addr = format!("0.0.0.0:{port}");
+
+    info!("[PORTAL] Node starting on {addr}");
+
+    let app = Router::new()
+        .route("/health", get(|| async { "PORTAL OK" }));
+
+    let listener = TcpListener::bind(addr)
+        .await
+        .map_err(|e| format!("{}", e))?;
+
+    axum::serve(listener, app)
+        .await
+        .map_err(|e| format!("{}", e))?;
+
+    Ok(())
+}

@@ -1,0 +1,26 @@
+# ================================================================
+# 📍 FILE: modules/portal/Cargo.toml
+#
+# 📝 Beschrijving:
+#   ELYSIA PORTAL node — Remote Access & Encrypted Proxy.
+#   Losstaande binary die naast kernel draait.
+# ================================================================
+
+[package]
+name = "portal"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "portal"
+path = "src/lib.rs"
+crate-type = ["rlib"]
+
+[dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+axum = "0.7"
+log = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+elysia_core = { path = "../../elysia_core" }
+inventory = "0.1"

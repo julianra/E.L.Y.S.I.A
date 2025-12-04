@@ -33,8 +33,7 @@ pub enum KernelError {
 }
 
 impl Kernel {
-    pub fn boot_and_run() -> Result<(), KernelError> {
-        env_logger::init();
+    pub async fn boot_and_run() -> Result<(), KernelError> {
         log::info!("[CORE] Booting ELYSIA Kernel...");
 
         let (pool, db_path) = crate::db_init::init_database()
@@ -71,20 +70,20 @@ impl Kernel {
             modules: Arc::new(kernel.modules.iter().map(|m| m.clone()).collect()),
         };
 
-        std::thread::spawn(move || {
-            let rt = Runtime::new().unwrap();
-            rt.block_on(async {
-                let app = crate::http::build_router(state);
-                let listener =
-                    tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+        tokio::spawn(async move {
+            let app = crate::http::build_router(state);
+            let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
+                .await
+                .expect("Failed to bind kernel HTTP listener");
 
-                log::info!("[CORE] HTTP server running on port 3000");
-                axum::serve(listener, app).await.unwrap();
-            });
+            log::info!("[CORE] HTTP server running on port 3000");
+
+            axum::serve(listener, app)
+                .await
+                .expect("Kernel HTTP server crashed");
         });
 
-        loop {
-            std::thread::sleep(std::time::Duration::from_secs(1));
-        }
+        // ⭐ BELANGRIJK: Kernel klaar → OK teruggeven
+        Ok(())
     }
 }
