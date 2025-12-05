@@ -1,24 +1,25 @@
 <!-- =========================================================================
 📍 FILE: src/routes/+page.svelte
 📝 BESCHRIJVING:
-  Rootpagina. Controleert automatisch of het toestel gepaird is.
-  - Indien niet gepaird → onboarding flow
-  - Indien gepaird → dashboard
+  Rootpagina van de UI.
+  - Checkt pairing-status bij opstart
+  - Routeert automatisch naar onboarding of dashboard
 ============================================================================ -->
+
 <script>
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
-  import { checkPairStatus } from '$lib/pairing';
+    import { onMount } from 'svelte';
+    import { goto } from '$app/navigation';
+    import { checkPairStatus } from '$lib/pairing';
 
-  onMount(async () => {
-    const isPaired = await checkPairStatus();
+    onMount(async () => {
+        const paired = await checkPairStatus();
 
-    if (!isPaired) {
-      goto('/onboarding');
-    } else {
-      goto('/dashboard');
-    }
-  });
+        if (paired) {
+            goto('/dashboard');
+        } else {
+            goto('/onboarding');
+        }
+    });
 </script>
 
 <p>Loading Elysia…</p>

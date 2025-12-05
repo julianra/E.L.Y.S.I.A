@@ -1,36 +1,36 @@
 // ============================================================================
 // 📍 FILE: src/lib/pairing.js
-// 📝 BESCHRIJVING:
-//   Pairing helper tussen ORBIT UI en de ELYSIA Kernel.
-//   Deze file implementeert de UI-zijde van:
-//     GET /pair/status
-//     GET /pair/init
-//     POST /pair/complete
+// 📝 Pairing helper tussen ORBIT UI en de ELYSIA Kernel.
+//    UI-implementatie van /pair/status, /pair/init, /pair/complete.
+//    Extra helper: checkPairStatus() voor routing.
 // ============================================================================
-import { kernelFetch } from '$lib/api';
-import { paired, deviceInfo, kernelInfo } from '$lib/stores';
 
+import { kernelFetch } from './api';
+
+export function getPairStatus() {
+    return kernelFetch('/pair/status');
+}
+
+export function startPairing() {
+    return kernelFetch('/pair/init');
+}
+
+export function completePairing(body) {
+    return kernelFetch('/pair/complete', {
+        method: 'POST',
+        body: JSON.stringify(body)
+    });
+}
+
+// --------------------------------------------------------------
+// CHECK PAIR STATUS
+// → Gebruikt in root +page.svelte
+// --------------------------------------------------------------
 export async function checkPairStatus() {
     try {
-        const status = await kernelFetch('/pair/status');
-        paired.set(status.paired);
-        deviceInfo.set(status.device);
-        kernelInfo.set(status.kernel);
-        return status.paired;
+        const res = await getPairStatus();
+        return res.paired === true;
     } catch (e) {
         return false;
     }
-}
-
-export async function beginPair() {
-    const res = await kernelFetch('/pair/init');
-    kernelInfo.set(res);
-    return res;
-}
-
-export async function completePair(payload) {
-    return kernelFetch('/pair/complete', {
-        method: 'POST',
-        body: JSON.stringify(payload)
-    });
 }
