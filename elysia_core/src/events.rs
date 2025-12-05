@@ -1,50 +1,64 @@
 // ======================================================================
 // 📍 FILE: elysia_core/src/events.rs
+//
+// 📝 BESCHRIJVING:
+//   De ELYSIA EventBus — een async, multi-handler event systeem dat
+//   alle modules onafhankelijk events laat verwerken.
+//
+//   BELANGRIJK:
+//     - Modules worden opgeslagen als Arc<dyn ElysiaModule>
+//     - Elke module krijgt zijn eigen Tokio task
+//     - Geen borrow-issues meer
+//     - Geen blocking in kernel
+//
+//   Modules ontvangen events via:
+//
+//       fn handle_event(&self, state: &KernelState, event: &KernelEvent)
+//
 // ======================================================================
 
 use serde_json::Value;
-use crate::module::ElysiaModule;
+use tokio::task;
 use crate::kernel::KernelState;
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
 pub struct KernelEvent {
     pub name: String,
     pub payload: Value,
 }
 
 #[derive(Clone, Default)]
-pub struct EventBus {
-    pub handlers: Vec<String>,
-}
+pub struct EventBus;
 
 impl EventBus {
     pub fn new() -> Self {
-        Self { handlers: vec![] }
+        Self {}
     }
 
-    pub fn register_handler(&mut self, handler: &str) {
-        self.handlers.push(handler.to_string());
-    }
+    /// Verstuur een event naar ALLE modules (elk in eigen async task).
+    pub async fn emit(&self, name: &str, payload: Value, state: KernelState) {
+        let event = KernelEvent {
+            name: name.to_string(),
+            payload,
+        };
 
-    pub fn clone_for_http(&self) -> Self {
-        self.clone()
-    }
-
-    // ⚡ Belangrijk: ctx → state
-    pub fn dispatch(
-        &self,
-        event: KernelEvent,
-        modules: &std::sync::Arc<Vec<Box<dyn ElysiaModule>>>,
-        state: &KernelState
-    ) {
-        let target = event.name.clone();
+        // Clone module list zodat closure 'static wordt
+        let modules = state.modules.clone();
 
         for module in modules.iter() {
-            let key = format!("{}.{}", module.name(), target);
+            let module = module.clone();     // Arc clone → 'static
+            let state = state.clone();       // KernelState clone → Arc inside
+            let event = event.clone();       // deep clone → safe
 
-            if self.handlers.contains(&key) {
-                module.handle_event(state, event.clone());
-            }
+            task::spawn(async move {
+                module.handle_event(&state, &event);
+
+                log::debug!(
+                    "[EVENTBUS] '{}' delivered to module '{}'",
+                    event.name,
+                    module.name()
+                );
+            });
         }
     }
 }

@@ -1,22 +1,17 @@
-# ================================================================
-# 📍 FILE: elysia/kernel/Cargo.toml
-# ================================================================
+# ======================================================================
+# 📍 FILE: kernel/Cargo.toml
+#
+# 📝 Beschrijving:
+#   Kernel executable die enkel ELYSIA Core start.
+# ======================================================================
 
 [package]
 name = "kernel"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 elysia_core = { path = "../elysia_core" }
-
-# logging
+tokio = { version = "1", features = ["full"] }
 log = "0.4"
 env_logger = "0.11"
-
-# async runtime
-tokio = { version = "1", features = ["full"] }
-
-# modules
-marthe = { path = "../modules/marthe" }
-portal = { path = "../modules/portal" }

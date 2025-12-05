@@ -1,14 +1,10 @@
-# ================================================================
-# 📍 FILE: elysia/elysia_core/Cargo.toml
+# ======================================================================
+# 📍 FILE: elysia_core/Cargo.toml
 #
-# 📝 BESCHRIJVING:
-#   De Cargo-manifest van de ELYSIA Core library crate.
-#   Dit is de motor van het systeem (eventbus, router, kernel).
-#
-# 🔧 TAKEN:
-#   - Compileert de core als library
-#   - Geeft kernel toegang tot AI, DB, eventbus, modules
-# ================================================================
+# 📝 Beschrijving:
+#   De complete, future-proof dependency set voor ELYSIA Core 2.0.
+#   Alles voor HTTP, mDNS, DB, modules, events, async runtime.
+# ======================================================================
 
 [package]
 name = "elysia_core"
@@ -16,33 +12,40 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# Logging
 log = "0.4"
 env_logger = "0.11"
-thiserror = "1"
 
-# Inventory module registratie
-inventory = { version = "0.1"}
-
-
-# SQLite + pool
-rusqlite = { version = "0.29", features = ["bundled"] }
-r2d2 = "0.8"
-r2d2_sqlite = "0.22"
-
-dirs = "5.0"
-mdns-sd = "0.7"
+# Async + HTTP
 tokio = { version = "1", features = ["full"] }
-axum = "0.7"
-local-ip-address = "0.5"
+axum = { version = "0.7", features = ["json", "macros"] }
 
+# JSON
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
-elysia_ai = { path = "../elysia_ai" }
+# Systeem info
+num_cpus = "1.16"
+sysinfo = "0.30"
 
+# Unieke node ID
+uuid = { version = "1", features = ["v4"] }
+
+# mDNS
+mdns-sd = "0.7"
+local-ip-address = "0.5"
+
+# ❗ DATABASE (de correcte, conflictvrije versie)
+rusqlite = { version = "0.30", features = ["bundled"] }
+r2d2 = "0.8"
+r2d2_sqlite = "0.23"   # <-- Deze MOET 0.23 zijn, anders krijg je conflicts
+
+# Module auto-load
+inventory = "0.1"
+
+# Error handling
+anyhow = "1.0"
+dirs = "5.0"
 
 [lib]
-proc-macro = false
 crate-type = ["rlib", "dylib"]
-
-[package.metadata.inventory]

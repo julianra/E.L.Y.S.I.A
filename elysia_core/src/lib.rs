@@ -1,54 +1,44 @@
 // ======================================================================
-// 📍 FILE: elysia/elysia_core/src/lib.rs
+// 📍 FILE: elysia_core/src/lib.rs
 //
 // 📝 BESCHRIJVING:
-//   Het centrale toegangspunt van de ELYSIA Core library.
-//   Dit bestand exporteert alle belangrijke structen en modules.
+//   Het publieke toegangspunt van de ELYSIA Core library.
+//   Exporteert enkel de noodzakelijke structen, traits en functies.
 //
-// 🔧 TAKEN:
-//   - Herexporteert Kernel, ElysiaModule, Router, EventBus, Context
-//   - Verbindt de interne modules van elysia_core
-//   - Zorgt dat andere crates enkel `elysia_core` hoeven te importeren
+//   Dit is de OS API van ELYSIA Core:
+//      - Kernel
+//      - KernelState
+//      - Module traits en registry
+//      - EventBus
+//      - Database initialisatie en migraties
+//      - HTTP router
+//      - mDNS discovery
+//
 // ======================================================================
 
+// Kernel
 pub mod kernel;
+
+// Modulesysteem
 pub mod module;
-pub mod context;
-pub mod router;
+
+// EventBus
 pub mod events;
-pub mod db_init;
+
+// DB
 pub mod db;
-pub mod mdns;
+pub mod db_init;
+
+// HTTP
 pub mod http;
-pub use elysia_ai::*;
 
+// Context (metadata + db)
+pub mod context;
 
-pub use crate::kernel::Kernel;
-pub use crate::module::ElysiaModule;
-pub use crate::context::KernelContext;  
-pub use crate::router::Router;
-pub use crate::events::EventBus;
+// mDNS
+pub mod mdns;
 
-pub async fn node_start() -> Result<(), String> {
-    use axum::{Router, routing::get};
-    use tokio::net::TcpListener;
-    use log::info;
-
-    let port = 7070;
-    let addr = format!("0.0.0.0:{port}");
-
-    info!("[PORTAL] Node starting on {addr}");
-
-    let app = Router::new()
-        .route("/health", get(|| async { "PORTAL OK" }));
-
-    let listener = TcpListener::bind(addr)
-        .await
-        .map_err(|e| format!("{}", e))?;
-
-    axum::serve(listener, app)
-        .await
-        .map_err(|e| format!("{}", e))?;
-
-    Ok(())
-}
+// Re-exporten voor eenvoud
+pub use kernel::Kernel;
+pub use kernel::KernelState;
+pub use module::ElysiaModule;
