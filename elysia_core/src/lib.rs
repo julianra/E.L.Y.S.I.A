@@ -2,18 +2,17 @@
 // 📍 FILE: elysia_core/src/lib.rs
 //
 // 📝 BESCHRIJVING:
-//   Het publieke toegangspunt van de ELYSIA Core library.
+//   Publiek toegangspunt van de ELYSIA Core library.
 //   Exporteert enkel de noodzakelijke structen, traits en functies.
 //
-//   Dit is de OS API van ELYSIA Core:
-//      - Kernel
-//      - KernelState
-//      - Module traits en registry
+//   OS API van ELYSIA Core:
+//      - Kernel & KernelState
+//      - Module-systeem (ElysiaModule + registry)
 //      - EventBus
-//      - Database initialisatie en migraties
+//      - Database init + migrations
 //      - HTTP router
 //      - mDNS discovery
-//
+//      - Auth (password hashing + login endpoints)
 // ======================================================================
 
 // Kernel
@@ -37,6 +36,12 @@ pub mod context;
 
 // mDNS
 pub mod mdns;
+
+// Auth
+pub mod auth;
+
+// Pairing
+pub mod pairing;
 
 // Re-exporten voor eenvoud
 pub use kernel::Kernel;

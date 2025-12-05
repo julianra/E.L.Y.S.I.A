@@ -2,8 +2,13 @@
 # 📍 FILE: elysia_core/Cargo.toml
 #
 # 📝 Beschrijving:
-#   De complete, future-proof dependency set voor ELYSIA Core 2.0.
-#   Alles voor HTTP, mDNS, DB, modules, events, async runtime.
+#   Dependency set voor ELYSIA Core 2.0.
+#   Uitgebreid met security/auth dependencies:
+#     - argon2    → password hashing
+#     - rand_core → randomness voor salts
+#     - hmac      → HMAC-SHA256 tokens
+#     - sha2      → SHA256 (basis voor HMAC)
+#     - hex       → hex-encoding van signatures
 # ======================================================================
 
 [package]
@@ -38,7 +43,7 @@ local-ip-address = "0.5"
 # ❗ DATABASE (de correcte, conflictvrije versie)
 rusqlite = { version = "0.30", features = ["bundled"] }
 r2d2 = "0.8"
-r2d2_sqlite = "0.23"   # <-- Deze MOET 0.23 zijn, anders krijg je conflicts
+r2d2_sqlite = "0.23"
 
 # Module auto-load
 inventory = "0.1"
@@ -46,6 +51,14 @@ inventory = "0.1"
 # Error handling
 anyhow = "1.0"
 dirs = "5.0"
+
+# 🔐 AUTH / SECURITY
+argon2 = "0.5"
+rand_core = "0.6"
+hmac = "0.12"
+sha2 = "0.10"
+hex = "0.4"
+rand = "0.8"
 
 [lib]
 crate-type = ["rlib", "dylib"]

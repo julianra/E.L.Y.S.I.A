@@ -49,7 +49,15 @@ impl Kernel {
 
         // --- Database initialisatie ---------------------------------------
         let (pool, db_path) = init_database()?;
+        let _ = &pool; 
         info!("[CORE] Database ready at {}", db_path);
+
+// --- MIGRATIES -----------------------------------------------------
+{
+    let conn = pool.get()?;
+    crate::db::run_migrations(&conn)?;
+    info!("[CORE] Migrations applied");
+}
 
         // --- Context (DB + AI placeholder + meta) --------------------------
         let ctx = Arc::new(KernelContext::new(pool));
