@@ -14,7 +14,6 @@
 // ======================================================================
 
 use crate::module::ElysiaModule;
-use inventory::collect;
 
 pub struct ModuleRegistration {
     pub module: fn() -> Box<dyn ElysiaModule>,

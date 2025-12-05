@@ -15,7 +15,6 @@
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use std::fs;
-use std::path::PathBuf;
 
 pub fn init_database() -> Result<(Pool<SqliteConnectionManager>, String), anyhow::Error> {
     // 1. Data folder bepalen

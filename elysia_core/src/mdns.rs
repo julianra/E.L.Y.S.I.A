@@ -22,10 +22,9 @@
 
 use mdns_sd::{ServiceDaemon, ServiceInfo};
 use serde_json::json;
-use std::sync::Arc;
 use crate::kernel::KernelState;
 
-pub fn start_mdns(port: u16, state: &KernelState) -> anyhow::Result<ServiceDaemon> {
+pub fn start_mdns(port: u16, _state: &KernelState) -> anyhow::Result<ServiceDaemon> {
     let mdns = ServiceDaemon::new()?;
 
     // -------------------------------------

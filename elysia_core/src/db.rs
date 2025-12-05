@@ -12,7 +12,7 @@
 
 use rusqlite::Connection;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 
 /// Voer ALLE migrations uit: eerst core, dan module-specifiek.
 pub fn run_migrations(conn: &Connection) -> anyhow::Result<()> {

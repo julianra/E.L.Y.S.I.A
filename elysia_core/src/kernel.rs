@@ -24,7 +24,6 @@ use crate::{
     module::registry::load_modules,
 };
 
-use axum::Router;
 use tokio::net::TcpListener;
 use tokio::task;
 use log::info;
