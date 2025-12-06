@@ -1,0 +1,22 @@
+[package]
+name = "marthe"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+name = "marthe"
+
+
+[dependencies]
+axum = "0.7"
+serde = { version = "1", features = ["derive"] }
+log = "0.4"
+
+elysia_core = { path = "../../elysia_core" }
+[workspace]
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = false
+opt-level = 0

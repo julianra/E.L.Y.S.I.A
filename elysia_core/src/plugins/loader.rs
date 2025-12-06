@@ -84,45 +84,59 @@ impl PluginLoader {
     }
 
     /// Laad ALLE plugins
-    pub unsafe fn load_all(
-        &self,
-        registry: &mut ModuleRegistry,
-        plugins: Vec<PluginInfo>,
-    ) -> anyhow::Result<()> {
-        for pl in plugins {
-            if !pl.lib_path.exists() {
-                println!("[PLUGIN] Library ontbreekt: {:?}", pl.lib_path);
-                continue;
-            }
-
-            println!(
-                "[PLUGIN] Laden: {} ({})",
-                pl.manifest.name, pl.manifest.version
-            );
-
-            let lib = match Library::new(&pl.lib_path) {
-                Ok(l) => l,
-                Err(e) => {
-                    println!("[PLUGIN] Fout bij laden library: {:?}", e);
-                    continue;
-                }
-            };
-
-            // Definieer type van entrypoint
-            type InitFn = extern "C" fn(&mut ModuleRegistry);
-
-            let func: Symbol<InitFn> = match lib.get(b"elysia_register") {
-                Ok(f) => f,
-                Err(e) => {
-                    println!("[PLUGIN] Entrypoint niet gevonden: {:?}", e);
-                    continue;
-                }
-            };
-
-            // Roep plugin init aan
-            func(registry);
+  pub unsafe fn load_all(
+    &self,
+    registry: &mut ModuleRegistry,
+    plugins: Vec<PluginInfo>,
+) -> anyhow::Result<()> {
+    for pl in plugins {
+        if !pl.lib_path.exists() {
+            println!("[PLUGIN] Library ontbreekt: {:?}", pl.lib_path);
+            continue;
         }
 
-        Ok(())
+        println!(
+            "[PLUGIN] Laden: {} ({})",
+            pl.manifest.name, pl.manifest.version
+        );
+
+        //
+        // 1️⃣ Laad de DLL (unsafe)
+        //
+        let lib = match unsafe { Library::new(&pl.lib_path) } {
+            Ok(l) => l,
+            Err(e) => {
+                println!("[PLUGIN] Fout bij laden library: {:?}", e);
+                continue;
+            }
+        };
+
+        //
+        // 2️⃣ Bewaar de DLL zodat deze niet automatisch unload
+        //    LET OP: store_lib geeft een reference terug
+        //
+        let stored_lib: &Library = registry.store_lib(lib);
+
+        //
+        // 3️⃣ Haal het entrypoint op
+        //
+        type InitFn = extern "C" fn(&mut ModuleRegistry);
+
+        let func: Symbol<InitFn> = match unsafe { stored_lib.get(b"elysia_register") } {
+            Ok(f) => f,
+            Err(e) => {
+                println!("[PLUGIN] Entrypoint niet gevonden: {:?}", e);
+                continue;
+            }
+        };
+
+        //
+        // 4️⃣ Initialiseert de plugin in registry
+        //
+        func(registry);
     }
+
+    Ok(())
+}
+
 }
