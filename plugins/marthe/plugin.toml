@@ -1,0 +1,21 @@
+# ======================================================================
+# 📍 FILE: plugins/marthe/plugin.toml
+#
+# 📝 Plugin manifest voor de MARTHE module (dynamic).
+#     - naam van de module
+#     - versie info
+#     - entrypoint (fn in de DLL)
+#     - permissies (optioneel)
+# ======================================================================
+
+name = "marthe"
+version = "1.0.0"
+description = "Automatische agenda- en planningsmodule."
+entrypoint = "marthe"
+
+permissions = [
+    "events:read",
+    "events:write",
+    "db:read",
+    "db:write"
+]

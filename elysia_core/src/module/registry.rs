@@ -1,32 +1,38 @@
 // ======================================================================
 // 📍 FILE: elysia_core/src/module/registry.rs
-//
-// 📝 BESCHRIJVING:
-//   Dit bestand beheert:
-//     - module discovery (inventory crate)
-//     - module loading
-//     - lijst van actieve modules
-//
-//   Elke module gebruikt:
-//
-//       inventory::submit!(ModuleRegistration { module: || Box::new(MyModule {}) });
-//
 // ======================================================================
 
-use crate::module::ElysiaModule;
+use super::ElysiaModule;
+use std::collections::HashMap;
+use std::sync::Arc;
 
-pub struct ModuleRegistration {
-    pub module: fn() -> Box<dyn ElysiaModule>,
+pub struct ModuleRegistry {
+    modules: HashMap<String, Arc<dyn ElysiaModule>>,
 }
 
-inventory::collect!(ModuleRegistration);
-
-pub fn load_modules() -> Vec<Box<dyn ElysiaModule>> {
-    let mut modules = vec![];
-
-    for reg in inventory::iter::<ModuleRegistration> {
-        modules.push((reg.module)());
+impl ModuleRegistry {
+    pub fn new() -> Self {
+        Self {
+            modules: HashMap::new(),
+        }
     }
 
-    modules
+    pub fn register_module(&mut self, module: Box<dyn ElysiaModule>) {
+        let name = module.name().to_string();
+        println!("[CORE][MODULE] Registered: {}", name);
+
+        self.modules.insert(name, Arc::from(module));
+    }
+
+    pub fn get(&self, name: &str) -> Option<Arc<dyn ElysiaModule>> {
+        self.modules.get(name).cloned()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = Arc<dyn ElysiaModule>> + '_ {
+        self.modules.values().cloned()
+    }
+
+    pub fn len(&self) -> usize {
+        self.modules.len()
+    }
 }

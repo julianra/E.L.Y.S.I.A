@@ -1,42 +1,44 @@
 // ======================================================================
 // 📍 FILE: elysia_core/src/kernel.rs
 //
-// 📝 Kernel boot sequence + pairing-state initialisatie.
+// 📝 Kernel boot sequence voor ELYSIA 2.1 (Dynamic Plugin Edition)
 //     - Database + migrations
-//     - KernelContext (incl. pairing state + meta)
+//     - KernelContext
 //     - EventBus
-//     - Module loader
+//     - Dynamic Plugin Loader (.dll/.so/.dylib)
+//     - ModuleRegistry
 //     - mDNS discovery
-//     - AXUM server (Axum 0.7 style)
+//     - Axum HTTP server
 // ======================================================================
 
 use std::sync::Arc;
-
-use crate::{
-    context::KernelContext,
-    db_init::init_database,
-    events::EventBus,
-    http::build_http_router,
-    mdns::start_mdns,
-    module::registry::load_modules,
-};
-
 use tokio::net::TcpListener;
 use tokio::task;
 use log::info;
 
+use crate::{
+    context::KernelContext,
+    db_init::init_database,
+    db,
+    events::EventBus,
+    http::build_http_router,
+    mdns::start_mdns,
+    module::registry::ModuleRegistry,
+    plugins::loader::PluginLoader,
+};
+
 #[derive(Clone)]
 pub struct KernelState {
     pub ctx: Arc<KernelContext>,
-    pub modules: Arc<Vec<Box<dyn crate::module::ElysiaModule>>>,
     pub bus: Arc<EventBus>,
+    pub modules: Arc<ModuleRegistry>,
 }
 
 pub struct Kernel;
 
 impl Kernel {
     pub async fn boot() -> anyhow::Result<()> {
-        info!("[CORE] Booting ELYSIA Kernel 2.0…");
+        info!("[CORE] Booting ELYSIA Kernel 2.1 – Dynamic Plugin System…");
 
         // ----------------------------------------------------
         // DATABASE INIT
@@ -49,7 +51,7 @@ impl Kernel {
         // ----------------------------------------------------
         {
             let conn = pool.get()?;
-            crate::db::run_migrations(&conn)?;
+            db::run_migrations(&conn)?;
             info!("[CORE] Migrations applied");
         }
 
@@ -64,18 +66,34 @@ impl Kernel {
         let bus = Arc::new(EventBus::new());
 
         // ----------------------------------------------------
-        // MODULES LADEN
+        // MODULE REGISTRY (dynamic)
         // ----------------------------------------------------
-        let modules = Arc::new(load_modules());
-        info!("[CORE] Loaded {} modules", modules.len());
+        let mut registry = ModuleRegistry::new();
+
+        // ----------------------------------------------------
+        // LOAD PLUGINS (.dll/.so/.dylib)
+        // ----------------------------------------------------
+        info!("[CORE] Scanning plugins/");
+        let loader = PluginLoader::new("plugins");
+        let found_plugins = loader.scan();
+
+        info!("[CORE] Found {} plugins", found_plugins.len());
+
+        unsafe {
+            loader.load_all(&mut registry, found_plugins)?;
+        }
+
+        info!("[CORE] Loaded {} modules", registry.len());
+
+        let modules = Arc::new(registry);
 
         // ----------------------------------------------------
         // RUNTIME STATE
         // ----------------------------------------------------
         let state = KernelState {
             ctx,
-            modules,
             bus,
+            modules,
         };
 
         // ----------------------------------------------------
@@ -85,7 +103,7 @@ impl Kernel {
 
         // ----------------------------------------------------
         // HTTP SERVER (Axum 0.7)
-// ----------------------------------------------------
+        // ----------------------------------------------------
         let app = build_http_router(state.clone());
 
         task::spawn(async move {
@@ -96,12 +114,11 @@ impl Kernel {
             info!("[CORE] HTTP server running on port 2022");
 
             axum::serve(
-    listener,
-    app.into_make_service_with_connect_info::<std::net::SocketAddr>()
-)
-.await
-.expect("HTTP crashed");
-
+                listener,
+                app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+            )
+            .await
+            .expect("HTTP crashed");
         });
 
         info!("[CORE] Kernel boot sequence complete.");

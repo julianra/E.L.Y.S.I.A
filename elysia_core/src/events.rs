@@ -1,20 +1,5 @@
 // ======================================================================
 // 📍 FILE: elysia_core/src/events.rs
-//
-// 📝 BESCHRIJVING:
-//   De ELYSIA EventBus — een async, multi-handler event systeem dat
-//   alle modules onafhankelijk events laat verwerken.
-//
-//   BELANGRIJK:
-//     - Modules worden opgeslagen als Arc<dyn ElysiaModule>
-//     - Elke module krijgt zijn eigen Tokio task
-//     - Geen borrow-issues meer
-//     - Geen blocking in kernel
-//
-//   Modules ontvangen events via:
-//
-//       fn handle_event(&self, state: &KernelState, event: &KernelEvent)
-//
 // ======================================================================
 
 use serde_json::Value;
@@ -35,28 +20,27 @@ impl EventBus {
         Self {}
     }
 
-    /// Verstuur een event naar ALLE modules (elk in eigen async task).
     pub async fn emit(&self, name: &str, payload: Value, state: KernelState) {
         let event = KernelEvent {
             name: name.to_string(),
             payload,
         };
 
-        // Clone module list zodat closure 'static wordt
-        let modules = state.modules.clone();
+        // FIX: Modules are ARC clones → 'static safe
+        let modules: Vec<_> = state.modules.iter().collect();
 
-        for module in modules.iter() {
-            let module = module.clone();     // Arc clone → 'static
-            let state = state.clone();       // KernelState clone → Arc inside
-            let event = event.clone();       // deep clone → safe
+        for module in modules {
+            let module_clone = module.clone();
+            let state_clone = state.clone();
+            let event_clone = event.clone();
 
             task::spawn(async move {
-                module.handle_event(&state, &event);
+                module_clone.handle_event(&state_clone, &event_clone);
 
                 log::debug!(
-                    "[EVENTBUS] '{}' delivered to module '{}'",
-                    event.name,
-                    module.name()
+                    "[EVENTBUS] '{}' delivered to '{}'",
+                    event_clone.name,
+                    module_clone.name()
                 );
             });
         }

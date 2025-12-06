@@ -1,25 +1,16 @@
 // ======================================================================
 // 📍 FILE: elysia_core/src/module/router.rs
-//
-// 📝 BESCHRIJVING:
-//   Dit bestand definieert helper-functies en structen voor het Advanced
-//   Modular Router systeem. Modules leveren gewoon een Axum Router terug,
-//   en Kernel monteert dit automatisch onder:
-//
-//       /api/<module_name>/*
-//
-//   Zo blijft de Core clean en consistent.
 // ======================================================================
 
 use axum::Router;
+use crate::module::registry::ModuleRegistry;
 
-pub struct ModuleRoute {
-    pub name: &'static str,
-    pub router: Router,
-}
+pub fn build_module_router(reg: &ModuleRegistry) -> Router {
+    let mut router = Router::new();
 
-impl ModuleRoute {
-    pub fn new(name: &'static str, router: Router) -> Self {
-        Self { name, router }
+    for module in reg.iter() {
+        router = router.merge(module.routes());
     }
+
+    router
 }

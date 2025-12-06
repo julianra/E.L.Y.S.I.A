@@ -14,7 +14,9 @@ pub fn mount_module_routes(state: &KernelState) -> Router {
         let r = Router::new()
             .route("/info", get({
                 let name = name.to_string();
-                move || async move { format!("Module '{}' is online", name) }
+                move || async move {
+                    format!("Module '{}' is online", name)
+                }
             }))
             .with_state(state.clone());
 

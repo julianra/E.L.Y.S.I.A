@@ -23,3 +23,4 @@ pub mod pairing;
 pub mod mdns;
 
 pub use http::build_http_router;
+pub mod plugins;
