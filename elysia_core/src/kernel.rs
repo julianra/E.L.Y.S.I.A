@@ -1,19 +1,14 @@
 // ======================================================================
 // 📍 FILE: elysia_core/src/kernel.rs
 //
-// 📝 BESCHRIJVING:
-//   De centrale ELYSIA Kernel. Deze file start:
-//      - Database
-//      - EventBus
-//      - Module loader
-//      - HTTP router (modulair)
-//      - mDNS (met node capabilities)
-//      - Runtime state voor alle modules
+// 📝 DEEL 1 – SECURITY BASELINE
+//     - Enable ConnectInfo<SocketAddr> so /auth/create_admin
+//       can check client IP.
 //
-//   Deze kernel is volledig future-proof en vormt het OS-hart van ELYSIA.
 // ======================================================================
 
 use std::sync::Arc;
+use std::net::SocketAddr;
 
 use crate::{
     context::KernelContext,
@@ -29,7 +24,7 @@ use tokio::task;
 use log::info;
 
 // --------------------------------------------------
-// KernelState – runtime state voor alle modules
+// KernelState – runtime state
 // --------------------------------------------------
 #[derive(Clone)]
 pub struct KernelState {
@@ -39,7 +34,7 @@ pub struct KernelState {
 }
 
 // --------------------------------------------------
-// Kernel struct
+// Kernel
 // --------------------------------------------------
 pub struct Kernel;
 
@@ -47,39 +42,33 @@ impl Kernel {
     pub async fn boot() -> anyhow::Result<()> {
         info!("[CORE] Booting ELYSIA Kernel 2.0…");
 
-        // --- Database initialisatie ---------------------------------------
+        // --- DB init -------------------------------------------------------
         let (pool, db_path) = init_database()?;
-        let _ = &pool;
         info!("[CORE] Database ready at {}", db_path);
 
-        // --- MIGRATIES -----------------------------------------------------
         {
             let conn = pool.get()?;
             crate::db::run_migrations(&conn)?;
             info!("[CORE] Migrations applied");
         }
 
-        // --- Context (DB + AI placeholder + meta) --------------------------
+        // --- Context -------------------------------------------------------
         let ctx = Arc::new(KernelContext::new(pool));
 
-        // --- Event bus -----------------------------------------------------
+        // --- EventBus ------------------------------------------------------
         let bus = Arc::new(EventBus::new());
 
-        // --- Modules laden -------------------------------------------------
+        // --- Modules -------------------------------------------------------
         let modules = Arc::new(load_modules());
         info!("[CORE] Loaded {} modules", modules.len());
 
-        // --- Kernel runtime state ------------------------------------------
-        let state = KernelState {
-            ctx,
-            modules,
-            bus,
-        };
+        // --- Runtime state -------------------------------------------------
+        let state = KernelState { ctx, modules, bus };
 
-        // --- mDNS service (node discovery) --------------------------------
+        // --- mDNS ----------------------------------------------------------
         start_mdns(2022, &state)?;
 
-        // --- HTTP server start ---------------------------------------------
+        // --- HTTP server ---------------------------------------------------
         let app = build_http_router(state.clone());
 
         task::spawn(async move {
@@ -89,9 +78,12 @@ impl Kernel {
 
             info!("[CORE] HTTP server running on port 2022");
 
-            axum::serve(listener, app)
-                .await
-                .expect("Kernel HTTP crashed");
+            axum::serve(
+                listener,
+                app.into_make_service_with_connect_info::<SocketAddr>(),
+            )
+            .await
+            .expect("Kernel HTTP crashed");
         });
 
         info!("[CORE] Kernel boot sequence complete.");

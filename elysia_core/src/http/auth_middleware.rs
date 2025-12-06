@@ -1,11 +1,12 @@
 // ======================================================================
 // 📍 FILE: elysia_core/src/http/auth_middleware.rs
 //
-// 📝 BESCHRIJVING:
-//   Enterprise LAN beveiliging voor alle protected routes.
-//   - User tokens:  usr.<username>.<hmac>
-//   - Device tokens: dev.<device_id>.<hmac>
-//   - Axum 0.7 compatibel middleware
+// 📝 DEEL 1 – SECURITY BASELINE
+//     - Validate user token
+//     - Validate device token
+//     - Public vs protected routes
+//
+//   🔐 Pairing-mode / pending devices komen pas in DEEL 2.
 // ======================================================================
 
 use axum::{
@@ -13,6 +14,7 @@ use axum::{
     response::Response,
     Extension,
 };
+
 use crate::{
     auth::validate_user_token,
     pairing::validate_device_token,
@@ -32,22 +34,20 @@ fn is_public(path: &str) -> bool {
         || path.starts_with("/pair/")
 }
 
-/// Middleware entrypoint
+/// Global security middleware
 pub async fn auth_layer(
     Extension(state): Extension<KernelState>,
     mut req: Request<axum::body::Body>,
     next: axum::middleware::Next,
-) -> Result<Response, StatusCode>
-
-{
+) -> Result<Response, StatusCode> {
     let path = req.uri().path().to_string();
 
-    // PUBLIC ROUTES
+    // Public routes
     if is_public(&path) {
         return Ok(next.run(req).await);
     }
 
-    // AUTH HEADER REQUIRED
+    // Authorization header required
     let Some(auth) = req.headers().get("Authorization") else {
         return Err(StatusCode::UNAUTHORIZED);
     };
@@ -59,15 +59,15 @@ pub async fn auth_layer(
 
     let token = &auth_str[7..];
 
-    // USER TOKEN?
+    // Try user-token
     if let Some(username) = validate_user_token(token) {
         req.extensions_mut().insert(AuthSubject::User(username));
         return Ok(next.run(req).await);
     }
 
-    // DEVICE TOKEN?
-    if let Some(id) = validate_device_token(token, &state) {
-        req.extensions_mut().insert(AuthSubject::Device(id));
+    // Try device-token
+    if let Some(device_id) = validate_device_token(token, &state) {
+        req.extensions_mut().insert(AuthSubject::Device(device_id));
         return Ok(next.run(req).await);
     }
 
