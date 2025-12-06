@@ -3,25 +3,41 @@
 //
 // 📝 BESCHRIJVING:
 //   HTTP endpoints voor ELYSIA Pairing 2.0.
-//   Compatibel met de SvelteKit UI die je al hebt.
+//   - GET  /pair/status
+//   - GET  /pair/init
+//   - POST /pair/complete
 //
-//   Endpoints:
-//     - GET  /pair/status
-//     - GET  /pair/init
-//     - POST /pair/complete
-//
-//   → Hiermee koppelt Orbit correct met ELYSIA Core.
+//   Enterprise LAN Security compatibel (Axum 0.7)
 // ======================================================================
 
-use axum::{Json, Router, routing::{get, post}, extract::State};
-use crate::{kernel::KernelState, pairing::*};
+use axum::{
+    Json,
+    Router,
+    routing::{get, post},
+    extract::State,
+};
+use crate::{
+    kernel::KernelState,
+    pairing::{
+        PairInitResponse,
+        PairCompleteRequest,
+        PairCompleteResponse,
+        generate_nonce,
+        create_device_token,
+    },
+};
 use serde_json::json;
 use uuid::Uuid;
+use rusqlite::params;
+
+// ------------------------------------------------------------
+// ROUTER
+// ------------------------------------------------------------
 
 pub fn pairing_routes(state: KernelState) -> Router {
     Router::new()
         .route("/pair/status", get(get_status))
-        .route("/pair/init", get(start_pairing))
+        .route("/pair/init",   get(start_pairing))
         .route("/pair/complete", post(complete_pairing))
         .with_state(state)
 }
@@ -30,7 +46,7 @@ pub fn pairing_routes(state: KernelState) -> Router {
 // GET /pair/status
 // ------------------------------------------------------------
 
-async fn get_status(State(_state): State<KernelState>) -> Json<serde_json::Value> {
+async fn get_status() -> Json<serde_json::Value> {
     Json(json!({
         "paired": false,
         "kernel": {
@@ -45,12 +61,10 @@ async fn get_status(State(_state): State<KernelState>) -> Json<serde_json::Value
 // GET /pair/init
 // ------------------------------------------------------------
 
-async fn start_pairing(State(_state): State<KernelState>) -> Json<PairInitResponse> {
-    let nonce = generate_nonce();
-
+async fn start_pairing() -> Json<PairInitResponse> {
     Json(PairInitResponse {
         node_id: "core-node".into(),
-        nonce,
+        nonce: generate_nonce(),
         version: "2.0".into(),
         capabilities: vec![
             "kernel".into(),
@@ -69,24 +83,27 @@ async fn complete_pairing(
     Json(body): Json<PairCompleteRequest>,
 ) -> Json<PairCompleteResponse> {
 
+    // Device-ID genereren
     let device_id = Uuid::new_v4().to_string();
-    let device_secret = generate_device_secret();
-    let device_hash = hash_secret(&device_secret);
 
-    insert_device(
-        &state,
-        &device_id,
-        &body.device_name,
-        &device_hash,
-        body.os,
-        body.model,
-    );
+    // Enterprise token genereren: dev.<id>.<hmac>
+    let device_token = create_device_token(&device_id);
 
-    let token = create_device_token(&device_id, &device_secret);
+    // Device opslaan in DB
+    {
+        let conn = state.ctx.db();
+
+        conn.execute(
+            "INSERT INTO devices (id, name, secret_hash, os, model, created_at)
+             VALUES (?1, ?2, '', ?3, ?4, CURRENT_TIMESTAMP)",
+            params![device_id, body.device_name, body.os, body.model],
+        )
+        .expect("Failed to insert device");
+    }
 
     Json(PairCompleteResponse {
         success: true,
         device_id,
-        device_token: token
+        device_token,
     })
 }
