@@ -1,13 +1,5 @@
 // ======================================================================
 // 📍 FILE: elysia_core/src/http/module_router.rs
-//
-// 📝 BESCHRIJVING:
-//   Deze router mount dynamisch alle geladen modules onder:
-//        /api/<module_name>/...
-//
-//   Belangrijk:
-//     • Neemt &KernelState (borrow) zodat de kernel-state niet moved.
-//     • Staat toe dat de hoofdrouter daarna pairing, auth, enz. kan mounten.
 // ======================================================================
 
 use axum::{Router, routing::get};

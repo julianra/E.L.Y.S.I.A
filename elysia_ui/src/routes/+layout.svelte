@@ -1,6 +1,10 @@
 <!-- ======================================================================
 📍 FILE: src/routes/+layout.svelte
-📝 Modern SvelteKit layout syntax (2025)
+📝 BESCHRIJVING:
+  Globale layout voor ELYSIA UI.
+  - Laadt globale CSS (app.css)
+  - Zet favicon
+  - Render child routes via <slot/>
 ====================================================================== -->
 
 <script>
@@ -10,6 +14,7 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+	<title>ELYSIA – Core Console</title>
 </svelte:head>
 
 <slot />

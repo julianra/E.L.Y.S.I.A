@@ -1,15 +1,11 @@
 // ======================================================================
 // 📍 FILE: elysia_core/src/auth/mod.rs
 //
-// 📝 DEEL 1 – SECURITY BASELINE
-//     - User token helpers (create_user_token / validate_user_token)
-//     - Password hashing (argon2id)
-//     - Login & initial admin creation
-//     - Localhost-only rule voor /auth/create_admin
-//
-//   🔐 Functioneel blijft het token EXACT hetzelfde als vroeger,
-//      zodat niets breekt. We structureren enkel de boel.
-//
+// 📝 AUTHENTICATIE-SUBSYSTEEM
+//     - Admin aanmaken
+//     - Inloggen
+//     - Password hashing (argon2)
+//     - User token (HMAC)
 // ======================================================================
 
 use argon2::{
@@ -20,7 +16,6 @@ use rand_core::OsRng;
 use serde::{Deserialize, Serialize};
 
 use crate::kernel::KernelState;
-
 use axum::{
     extract::{State, ConnectInfo},
     Json,
@@ -28,9 +23,10 @@ use axum::{
 use rusqlite::params;
 use std::net::SocketAddr;
 
-// -----------------------------------------------------
-// Data structs
-// -----------------------------------------------------
+use hmac::{Hmac, Mac};
+use sha2::Sha256;
+
+type HmacSha256 = Hmac<Sha256>;
 
 #[derive(Serialize)]
 pub struct InitialState {
@@ -56,7 +52,7 @@ pub struct LoginResponse {
 }
 
 // -----------------------------------------------------
-// Password hashing helpers (argon2id)
+// Password hashing helpers
 // -----------------------------------------------------
 
 fn hash_password(password: &str) -> String {
@@ -81,15 +77,9 @@ fn verify_password(password: &str, hash: &str) -> bool {
 }
 
 // -----------------------------------------------------
-// USER TOKEN – SAME BEHAVIOUR AS BEFORE
+// USER TOKEN
 // -----------------------------------------------------
 
-use hmac::{Hmac, Mac};
-use sha2::Sha256;
-
-type HmacSha256 = Hmac<Sha256>;
-
-/// Generates the user token; same content as before.
 pub fn create_user_token(username: &str) -> String {
     let mut mac = HmacSha256::new_from_slice(b"ELYISA_SUPER_SECRET_CHANGE_THIS")
         .expect("HMAC init failed");
@@ -100,7 +90,6 @@ pub fn create_user_token(username: &str) -> String {
     format!("{}.{}", username, hex::encode(signature))
 }
 
-/// Validates the user token.
 pub fn validate_user_token(token: &str) -> Option<String> {
     let parts: Vec<&str> = token.split('.').collect();
     if parts.len() != 2 {
@@ -124,10 +113,24 @@ pub fn validate_user_token(token: &str) -> Option<String> {
 }
 
 // -----------------------------------------------------
-// HTTP HANDLERS
+// HTTP ROUTER
 // -----------------------------------------------------
 
-/// GET /auth/initial_state
+pub fn http_router(state: KernelState) -> axum::Router {
+    use axum::routing::{get, post};
+
+axum::Router::new()
+    .route("/login", post(login))
+    .route("/initial_state", get(get_initial_state).post(get_initial_state))
+    .route("/create_admin", post(create_admin))
+    .with_state(state)
+
+}
+
+// -----------------------------------------------------
+// ROUTE IMPLEMENTATIES
+// -----------------------------------------------------
+
 pub async fn get_initial_state(State(state): State<KernelState>) -> Json<InitialState> {
     let conn = state.ctx.db();
 
@@ -142,22 +145,14 @@ pub async fn get_initial_state(State(state): State<KernelState>) -> Json<Initial
     Json(InitialState { admin_exists: exists })
 }
 
-/// POST /auth/create_admin  (LOCALHOST ONLY!)
-///
-/// ONLY allowed from 127.0.0.1 or ::1.
-/// Remote LAN devices MUST NOT be able to create the first admin.
 pub async fn create_admin(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     State(state): State<KernelState>,
     Json(body): Json<CreateAdminRequest>,
 ) -> Json<serde_json::Value> {
-    // ------------------------------
-    // 🔒 LOCALHOST-ONLY CHECK
-    // ------------------------------
     let ip = addr.ip();
 
-    let is_localhost = ip.is_loopback() || ip.to_string() == "127.0.0.1";
-    if !is_localhost {
+    if !ip.is_loopback() {
         return Json(serde_json::json!({
             "success": false,
             "error": "Admin creation allowed only from localhost"
@@ -166,7 +161,6 @@ pub async fn create_admin(
 
     let conn = state.ctx.db();
 
-    // Prevent double-admin
     let exists: bool = conn
         .query_row(
             "SELECT EXISTS(SELECT 1 FROM users WHERE role = 'admin')",
@@ -188,12 +182,11 @@ pub async fn create_admin(
         "INSERT INTO users (username, password_hash, role) VALUES (?, ?, 'admin')",
         params![body.username, hash],
     )
-    .expect("Failed to insert admin user");
+    .expect("Failed to insert admin");
 
     Json(serde_json::json!({ "success": true }))
 }
 
-/// POST /auth/login
 pub async fn login(
     State(state): State<KernelState>,
     Json(body): Json<LoginRequest>,
@@ -207,17 +200,11 @@ pub async fn login(
     );
 
     let Ok(hash) = row else {
-        return Json(serde_json::json!({
-            "success": false,
-            "error": "Invalid credentials"
-        }));
+        return Json(serde_json::json!({"success": false, "error": "Invalid credentials"}));
     };
 
     if !verify_password(&body.password, &hash) {
-        return Json(serde_json::json!({
-            "success": false,
-            "error": "Invalid credentials"
-        }));
+        return Json(serde_json::json!({"success": false, "error": "Invalid credentials"}));
     }
 
     let token = create_user_token(&body.username);

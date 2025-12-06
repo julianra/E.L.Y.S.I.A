@@ -1,14 +1,16 @@
 // ======================================================================
 // 📍 FILE: elysia_core/src/kernel.rs
 //
-// 📝 DEEL 1 – SECURITY BASELINE
-//     - Enable ConnectInfo<SocketAddr> so /auth/create_admin
-//       can check client IP.
-//
+// 📝 Kernel boot sequence + pairing-state initialisatie.
+//     - Database + migrations
+//     - KernelContext (incl. pairing state + meta)
+//     - EventBus
+//     - Module loader
+//     - mDNS discovery
+//     - AXUM server (Axum 0.7 style)
 // ======================================================================
 
 use std::sync::Arc;
-use std::net::SocketAddr;
 
 use crate::{
     context::KernelContext,
@@ -23,9 +25,6 @@ use tokio::net::TcpListener;
 use tokio::task;
 use log::info;
 
-// --------------------------------------------------
-// KernelState – runtime state
-// --------------------------------------------------
 #[derive(Clone)]
 pub struct KernelState {
     pub ctx: Arc<KernelContext>,
@@ -33,61 +32,79 @@ pub struct KernelState {
     pub bus: Arc<EventBus>,
 }
 
-// --------------------------------------------------
-// Kernel
-// --------------------------------------------------
 pub struct Kernel;
 
 impl Kernel {
     pub async fn boot() -> anyhow::Result<()> {
         info!("[CORE] Booting ELYSIA Kernel 2.0…");
 
-        // --- DB init -------------------------------------------------------
+        // ----------------------------------------------------
+        // DATABASE INIT
+        // ----------------------------------------------------
         let (pool, db_path) = init_database()?;
         info!("[CORE] Database ready at {}", db_path);
 
+        // ----------------------------------------------------
+        // MIGRATIONS
+        // ----------------------------------------------------
         {
             let conn = pool.get()?;
             crate::db::run_migrations(&conn)?;
             info!("[CORE] Migrations applied");
         }
 
-        // --- Context -------------------------------------------------------
+        // ----------------------------------------------------
+        // CONTEXT (DB + PAIRING STATE + META)
+        // ----------------------------------------------------
         let ctx = Arc::new(KernelContext::new(pool));
 
-        // --- EventBus ------------------------------------------------------
+        // ----------------------------------------------------
+        // EVENT BUS
+        // ----------------------------------------------------
         let bus = Arc::new(EventBus::new());
 
-        // --- Modules -------------------------------------------------------
+        // ----------------------------------------------------
+        // MODULES LADEN
+        // ----------------------------------------------------
         let modules = Arc::new(load_modules());
         info!("[CORE] Loaded {} modules", modules.len());
 
-        // --- Runtime state -------------------------------------------------
-        let state = KernelState { ctx, modules, bus };
+        // ----------------------------------------------------
+        // RUNTIME STATE
+        // ----------------------------------------------------
+        let state = KernelState {
+            ctx,
+            modules,
+            bus,
+        };
 
-        // --- mDNS ----------------------------------------------------------
+        // ----------------------------------------------------
+        // mDNS DISCOVERY
+        // ----------------------------------------------------
         start_mdns(2022, &state)?;
 
-        // --- HTTP server ---------------------------------------------------
+        // ----------------------------------------------------
+        // HTTP SERVER (Axum 0.7)
+// ----------------------------------------------------
         let app = build_http_router(state.clone());
 
         task::spawn(async move {
             let listener = TcpListener::bind("0.0.0.0:2022")
                 .await
-                .expect("Failed to bind port 2022");
+                .expect("Port bind failed");
 
             info!("[CORE] HTTP server running on port 2022");
 
             axum::serve(
-                listener,
-                app.into_make_service_with_connect_info::<SocketAddr>(),
-            )
-            .await
-            .expect("Kernel HTTP crashed");
+    listener,
+    app.into_make_service_with_connect_info::<std::net::SocketAddr>()
+)
+.await
+.expect("HTTP crashed");
+
         });
 
         info!("[CORE] Kernel boot sequence complete.");
-
         Ok(())
     }
 }
