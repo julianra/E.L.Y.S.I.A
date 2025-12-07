@@ -1,5 +1,0 @@
-name = "marthe"
-version = "0.1.0"
-description = "Planning & Scheduling module"
-entrypoint = "marthe"
-permissions = ["events", "http"]
