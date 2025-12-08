@@ -1,0 +1,99 @@
+// ======================================================================
+// 📍 FILE: elysia_core/src/kernel/kernel.rs
+// 📝 ELYSIA Kernel boot sequence — no HTTP, pure core runtime.
+// ======================================================================
+
+use std::sync::Arc;
+use log::info;
+use tokio::task;
+
+use crate::{
+    context::KernelContext,
+    db_init::init_database,
+    db,
+    events::EventBus,
+    module::registry::ModuleRegistry,
+    plugins::loader::PluginLoader,
+    kernel_api::get_kernel_status,
+    mdns::start_mdns,
+};
+
+#[derive(Clone)]
+pub struct KernelState {
+    pub ctx: Arc<KernelContext>,
+    pub bus: Arc<EventBus>,
+    pub modules: Arc<ModuleRegistry>,
+}
+
+pub struct Kernel;
+
+impl Kernel {
+    pub async fn boot() -> anyhow::Result<()> {
+        info!("[CORE] Booting ELYSIA Kernel 2.1…");
+
+        // -------------------------
+        // DATABASE INIT
+        // -------------------------
+        let (pool, db_path) = init_database()?;
+        info!("[CORE] Database ready at {}", db_path);
+
+        // -------------------------
+        // MIGRATIONS
+        // -------------------------
+        {
+            let conn = pool.get()?;
+            db::run_migrations(&conn)?;
+            info!("[CORE] Migrations applied");
+        }
+
+        // -------------------------
+        // CONTEXT
+        // -------------------------
+        let ctx = Arc::new(KernelContext::new(pool));
+
+        // -------------------------
+        // EVENT BUS
+        // -------------------------
+        let bus = Arc::new(EventBus::new());
+
+        // -------------------------
+        // MODULE REGISTRY
+        // -------------------------
+        let mut registry = ModuleRegistry::new();
+
+        // -------------------------
+        // LOAD PLUGINS
+        // -------------------------
+        info!("[CORE] Scanning plugins/");
+        let loader = PluginLoader::new("plugins");
+        let found = loader.scan();
+
+        unsafe {
+            loader.load_all(&mut registry, found)?;
+        }
+
+        info!("[CORE] Loaded {} modules", registry.len());
+
+        // -------------------------
+        // COMPOSE STATE
+        // -------------------------
+        let state = KernelState {
+            ctx,
+            bus,
+            modules: Arc::new(registry),
+        };
+
+        // -------------------------
+        // MDNS DISCOVERY
+        // -------------------------
+        start_mdns(2022, &state)?;
+
+        // -------------------------
+        // KERNEL READY
+        // -------------------------
+        let status = get_kernel_status(&state);
+        info!("[CORE] Kernel online with {} modules", status.modules);
+
+        Ok(())
+    }
+}

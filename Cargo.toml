@@ -1,0 +1,17 @@
+# ======================================================================
+# 📍 FILE: Cargo.toml (root workspace)
+# 📝 Central workspace for ELYSIA Kernel and Core crates.
+#     - Edition 2024 compatible
+#     - Ensures clean dependency resolution
+#     - No external crates added here
+# ======================================================================
+
+[workspace]
+resolver = "3"
+
+members = [
+    "elysia_core",
+    "kernel",
+]
+
+

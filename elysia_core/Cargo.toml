@@ -1,0 +1,54 @@
+# ======================================================================
+# 📍 FILE: elysia_core/Cargo.toml
+# 📝 Library crate for ELYSIA Core (Kernel Engine)
+# ======================================================================
+
+[package]
+name = "elysia_core"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+# Logging
+log = "0.4"
+env_logger = "0.11"
+
+# Async
+tokio = { version = "1", features = ["full"] }
+
+# JSON (used internally for metadata)
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# mDNS & system info
+mdns-sd = "0.7"
+local-ip-address = "0.5"
+num_cpus = "1.16"
+sysinfo = "0.30"
+
+# Unique IDs
+uuid = { version = "1", features = ["v4"] }
+
+# Database
+rusqlite = { version = "0.30", features = ["bundled"] }
+r2d2 = "0.8"
+r2d2_sqlite = "0.23"
+
+# Dynamic plugin loader
+libloading = "0.8"
+toml = "0.8"
+
+# Error handling
+anyhow = "1.0"
+dirs = "5.0"
+
+# Security
+argon2 = "0.5"
+rand_core = "0.6"
+hmac = "0.12"
+sha2 = "0.10"
+hex = "0.4"
+rand = "0.8"
