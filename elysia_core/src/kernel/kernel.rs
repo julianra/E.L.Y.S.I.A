@@ -77,11 +77,12 @@ impl Kernel {
         // -------------------------
         // COMPOSE STATE
         // -------------------------
-        let state = KernelState {
-            ctx,
-            bus,
-            modules: Arc::new(registry),
-        };
+        let state = Arc::new(KernelState {
+    ctx,
+    bus,
+    modules: Arc::new(registry),
+});
+
 
         // -------------------------
         // MDNS DISCOVERY
@@ -93,6 +94,32 @@ impl Kernel {
         // -------------------------
         let status = get_kernel_status(&state);
         info!("[CORE] Kernel online with {} modules", status.modules);
+        // -------------------------
+// -------------------------
+// LOCAL HTTP SERVER (Admin IPC)
+// -------------------------
+{
+    let state_http = state.clone();
+
+    task::spawn(async move {
+        use axum::serve;
+        use tokio::net::TcpListener;
+        use std::net::SocketAddr;
+        use crate::http::build_router;
+
+        let addr = SocketAddr::from(([127, 0, 0, 1], 2022));
+
+        let app = build_router(state_http.clone());
+
+        let listener = TcpListener::bind(addr).await.unwrap();
+
+        info!("[CORE] Local admin API on http://127.0.0.1:2022");
+
+        serve(listener, app)
+            .await
+            .unwrap();
+    });
+}
 
         Ok(())
     }

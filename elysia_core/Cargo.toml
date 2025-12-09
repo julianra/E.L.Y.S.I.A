@@ -52,3 +52,6 @@ hmac = "0.12"
 sha2 = "0.10"
 hex = "0.4"
 rand = "0.8"
+axum = "0.7"
+tower = "0.5"
+hyper = { version = "1", features = ["full"] }
