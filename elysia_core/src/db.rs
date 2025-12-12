@@ -18,7 +18,12 @@ use std::path::{Path};
 pub fn run_migrations(conn: &Connection) -> anyhow::Result<()> {
     let mut migrations = vec![];
 
-    collect_sql_files("elysia_core/migrations", &mut migrations);
+    let core_migrations = format!(
+        "{}/migrations",
+        env!("CARGO_MANIFEST_DIR")
+    );
+
+    collect_sql_files(&core_migrations, &mut migrations);
     collect_module_migrations("modules", &mut migrations);
 
     migrations.sort();
