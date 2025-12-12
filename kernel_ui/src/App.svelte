@@ -1,49 +1,47 @@
 <script>
-  import { onDestroy, onMount } from 'svelte';
-
-  let status = 'initializing';
-  let interval;
-
-  async function updateStatus() {
-    if (window.kernel && window.kernel.getStatus) {
-      status = await window.kernel.getStatus();
-    } else {
-      status = 'no-bridge';
-    }
-  }
-
-  onMount(() => {
-    updateStatus();
-    interval = setInterval(updateStatus, 1000);
-  });
-
-  onDestroy(() => {
-    clearInterval(interval);
-  });
+  import svelteLogo from './assets/svelte.svg'
+  import viteLogo from '/vite.svg'
+  import Counter from './lib/Counter.svelte'
 </script>
 
+<main>
+  <div>
+    <a href="https://vite.dev" target="_blank" rel="noreferrer">
+      <img src={viteLogo} class="logo" alt="Vite Logo" />
+    </a>
+    <a href="https://svelte.dev" target="_blank" rel="noreferrer">
+      <img src={svelteLogo} class="logo svelte" alt="Svelte Logo" />
+    </a>
+  </div>
+  <h1>Vite + Svelte</h1>
+
+  <div class="card">
+    <Counter />
+  </div>
+
+  <p>
+    Check out <a href="https://github.com/sveltejs/kit#readme" target="_blank" rel="noreferrer">SvelteKit</a>, the official Svelte app framework powered by Vite!
+  </p>
+
+  <p class="read-the-docs">
+    Click on the Vite and Svelte logos to learn more
+  </p>
+</main>
+
 <style>
-  :global(body) {
-    margin: 0;
-    background: #0b0e14;
-    color: #e6e6eb;
-    font-family: system-ui, sans-serif;
+  .logo {
+    height: 6em;
+    padding: 1.5em;
+    will-change: filter;
+    transition: filter 300ms;
   }
-
-  .running {
-    color: #4ade80;
+  .logo:hover {
+    filter: drop-shadow(0 0 2em #646cffaa);
   }
-
-  .starting {
-    color: #facc15;
+  .logo.svelte:hover {
+    filter: drop-shadow(0 0 2em #ff3e00aa);
   }
-
-  .error {
-    color: #f87171;
+  .read-the-docs {
+    color: #888;
   }
 </style>
-
-<div class="app">
-  <h1>ELYSIA Kernel UI</h1>
-  <p class={status}>Kernel status: {status}</p>
-</div>
