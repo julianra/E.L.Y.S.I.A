@@ -1,12 +1,12 @@
-<!-- ======================================================================
+<!-- =========================================================
 📍 FILE: src/components/Orb.svelte
 📝 ROLE:
-  ELYSIA ORB met pulse animatie.
-====================================================================== -->
+  Centrale ELYSIA Orb – schaalbaar & veilig
+========================================================= -->
 
 <script lang="ts">
-  import logo from "../assets/logo.png";
-  export let size = 180;
+  import logo from '../assets/logo.png';
+  export let size = 140; // 👈 KLEINER
 </script>
 
 <div
@@ -23,14 +23,18 @@
     border-radius: 50%;
     background-size: cover;
     background-position: center;
-    margin-bottom: 24px;
-    box-shadow: 0 0 40px rgba(120,140,255,0.6);
-    animation: orbPulse 4s infinite ease-in-out;
+
+    box-shadow:
+      0 0 20px rgba(120,140,255,0.6),
+      0 0 40px rgba(90,120,255,0.4);
+
+    animation: pulse 4s ease-in-out infinite;
+    flex-shrink: 0; /* 👈 nooit squashen */
   }
 
-  @keyframes orbPulse {
-    0% { box-shadow: 0 0 20px rgba(90,120,255,0.4); }
-    50% { box-shadow: 0 0 50px rgba(140,170,255,0.9); }
-    100% { box-shadow: 0 0 20px rgba(90,120,255,0.4); }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 16px rgba(90,120,255,0.4); }
+    50% { box-shadow: 0 0 40px rgba(140,170,255,0.9); }
+    100% { box-shadow: 0 0 16px rgba(90,120,255,0.4); }
   }
 </style>

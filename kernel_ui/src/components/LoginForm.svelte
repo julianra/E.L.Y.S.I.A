@@ -40,7 +40,7 @@
       }}
       disabled={loading}
     >
-      {loading ? "Connecting…" : "Login"}
+      {loading ? "verbinden..." : "Login"}
     </button>
 
     {#if error}<p class="error">{error}</p>{/if}
