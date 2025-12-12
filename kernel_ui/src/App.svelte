@@ -1,47 +1,74 @@
 <script>
-  import svelteLogo from './assets/svelte.svg'
-  import viteLogo from '/vite.svg'
-  import Counter from './lib/Counter.svelte'
+  let kernelOnline = false
+  let lastSeen = null
+
+  if (window.elysia) {
+    window.elysia.onKernelStatus((status) => {
+      kernelOnline = status.online
+      lastSeen = status.timestamp
+    })
+  }
 </script>
 
-<main>
-  <div>
-    <a href="https://vite.dev" target="_blank" rel="noreferrer">
-      <img src={viteLogo} class="logo" alt="Vite Logo" />
-    </a>
-    <a href="https://svelte.dev" target="_blank" rel="noreferrer">
-      <img src={svelteLogo} class="logo svelte" alt="Svelte Logo" />
-    </a>
-  </div>
-  <h1>Vite + Svelte</h1>
-
-  <div class="card">
-    <Counter />
-  </div>
-
-  <p>
-    Check out <a href="https://github.com/sveltejs/kit#readme" target="_blank" rel="noreferrer">SvelteKit</a>, the official Svelte app framework powered by Vite!
-  </p>
-
-  <p class="read-the-docs">
-    Click on the Vite and Svelte logos to learn more
-  </p>
-</main>
-
 <style>
-  .logo {
-    height: 6em;
-    padding: 1.5em;
-    will-change: filter;
-    transition: filter 300ms;
+  :global(body) {
+    margin: 0;
+    background: #0b0e14;
+    color: #e6e6eb;
+    font-family: system-ui, sans-serif;
   }
-  .logo:hover {
-    filter: drop-shadow(0 0 2em #646cffaa);
+
+  .root {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-  .logo.svelte:hover {
-    filter: drop-shadow(0 0 2em #ff3e00aa);
+
+  .panel {
+    padding: 2.5rem 3rem;
+    border-radius: 16px;
+    background: #151a23;
+    box-shadow: 0 0 50px rgba(120, 80, 255, 0.35);
+    text-align: center;
+    min-width: 360px;
   }
-  .read-the-docs {
-    color: #888;
+
+  .status {
+    margin-top: 1rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+
+  .online {
+    color: #4ade80;
+  }
+
+  .offline {
+    color: #f87171;
+  }
+
+  .dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+    background: currentColor;
   }
 </style>
+
+<div class="root">
+  <div class="panel">
+    <h1>ELYSIA Kernel</h1>
+
+    <div class="status {kernelOnline ? 'online' : 'offline'}">
+      <span class="dot"></span>
+      {kernelOnline ? 'ONLINE' : 'OFFLINE'}
+    </div>
+
+    {#if lastSeen}
+      <p>Last check: {new Date(lastSeen).toLocaleTimeString()}</p>
+    {/if}
+  </div>
+</div>
