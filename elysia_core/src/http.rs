@@ -1,8 +1,8 @@
-// elysia_core/src/http.rs
 // ======================================================================
 // 📍 FILE: elysia_core/src/http.rs
-// 📝 HTTP API module for ELYSIA Core.
+// 📝 Minimal HTTP API for ELYSIA Core (stable version)
 // ======================================================================
+
 use axum::{
     routing::{get, post},
     Json, Router,
@@ -23,9 +23,9 @@ use crate::{
 };
 
 //
-// =============================
+// ======================================================================
 //  ADMIN EXISTS
-// =============================
+// ======================================================================
 //
 
 #[derive(Serialize)]
@@ -39,9 +39,9 @@ async fn has_admin(state: Arc<KernelState>) -> Json<AdminExistsResponse> {
 }
 
 //
-// =============================
+// ======================================================================
 //  CREATE ADMIN
-// =============================
+// ======================================================================
 //
 
 #[derive(Deserialize)]
@@ -83,9 +83,9 @@ async fn create_admin(
 }
 
 //
-// =============================
+// ======================================================================
 //  LOGIN
-// =============================
+// ======================================================================
 //
 
 #[derive(Deserialize)]
@@ -131,13 +131,41 @@ async fn login(
 }
 
 //
-// =============================
+// ======================================================================
+//  STATUS ROUTE — SUPER SIMPLE VERSION
+// ======================================================================
+//
+
+#[derive(Serialize)]
+pub struct StatusResponse {
+    pub status: String,
+    pub version: String,
+    pub db: String,
+    pub modules: usize,
+}
+
+async fn status(_state: Arc<KernelState>) -> Json<StatusResponse> {
+    // "0 modules" zolang plugin loader niets laadt
+    let modules = 0;
+
+    Json(StatusResponse {
+        status: "online".into(),
+        version: "2.1".into(),
+        db: "ok".into(),
+        modules,
+    })
+}
+
+//
+// ======================================================================
 //  ROUTER BUILDER
-// =============================
+// ======================================================================
 //
 
 pub fn build_router(state: Arc<KernelState>) -> Router {
     Router::new()
+
+        // ---------- ADMIN ----------
         .route(
             "/auth/has_admin",
             get({
@@ -157,6 +185,15 @@ pub fn build_router(state: Arc<KernelState>) -> Router {
             post({
                 let s = state.clone();
                 move |payload| login(s.clone(), payload)
+            }),
+        )
+
+        // ---------- STATUS ----------
+        .route(
+            "/status",
+            get({
+                let s = state.clone();
+                move || status(s.clone())
             }),
         )
 }

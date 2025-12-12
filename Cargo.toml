@@ -12,6 +12,7 @@ resolver = "3"
 members = [
     "elysia_core",
     "kernel",
+    "starter"
 ]
 
 

@@ -1,150 +1,90 @@
 # ============================================
-# Rust / Cargo Gitignore
+# Node / SvelteKit / Vite
 # ============================================
 
-# Compiled files
-target/
+node_modules/
+dist/
+.build/
+.svelte-kit/
+.vite/
+.vite-cache/
 
-# Cargo lock files for libraries (for binaries keep Cargo.lock)
-Cargo.lock
-
-# Backup files
-*.rs.bk
-
-# IDE / Editor settings
-.idea/
-.vscode/
-.DS_Store
+# SvelteKit env
+.env
+.env.*
 
 # Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 *.log
 
-# Environment variables
-.env
+# ============================================
+# Electron
+# ============================================
 
-# Rust tools
-rustfmt.toml
-.clippy.toml
+# Electron build output
+release/
+out/
+win-unpacked/
+mac-unpacked/
+linux-unpacked/
 
-# Temporary or generated files
+# Electron cache
+.cache/
+.electron/
+.electron-builder/
+
+# Native modules rebuild output
+*.node
+
+# ============================================
+# OS / Editor
+# ============================================
+
+.DS_Store
+Thumbs.db
+
+.vscode/
+.idea/
+*.code-workspace
+*.iml
+
+# ============================================
+# Windows
+# ============================================
+
+*.exe~
+*.lnk
+
+# ============================================
+# Temporary files
+# ============================================
+
 *.tmp
 *.swp
 *.swo
 *~
 
-# WASM build artifacts (for later)
-wasm/
-*.wasm
-wasm-pack.log
+# ============================================
+# Source maps (optioneel)
+# ============================================
 
-# Build artifacts
-/debug/
-release/
+*.map
 
-# ELYSIA-specific (future plugins, state, runtime)
-data/
-logs/
-snapshots/
-# Flutter/Dart/Pub
-.dart_tool/
-.packages
-.pub-cache/
-.pub/
-/build/
-.flutter-plugins
-.flutter-plugins-dependencies
+# ============================================
+# Security / secrets
+# ============================================
 
-# Generated plugin files
-generated_plugin_registrant.dart
+.env.local
+.env.production
+.env.development
 
-# IntelliJ / Android Studio
-.idea/
-*.iml
+# ============================================
+# Optional: ignore kernel binary IF it is built elsewhere
+# (haal dit weg als kernel.exe wél in repo moet)
+# ============================================
 
-# VSCode
-.vscode/
-*.code-workspace
-
-# Flutter-specific dependencies & tool state
-.flutter-plugins
-.flutter-plugins-dependencies
-.flutter-versions
-.canvaskit/
-.flutter-plugins
-.flutter-plugins-dependencies
-.metadata
-
-# Android
-**/android/local.properties
-**/android/.gradle/
-**/android/.idea/
-**/android/captures/
-**/android/app/debug/
-**/android/app/profile/
-**/android/app/release/
-
-# Gradle
-.gradle/
-**/build/
-gradlew
-gradlew.bat
-gradle-wrapper.jar
-
-# iOS
-**/ios/Flutter/.last_build_id
-**/ios/Flutter/Flutter.framework
-**/ios/Flutter/Flutter.podspec
-**/ios/Flutter/App.framework
-**/ios/.symlinks/
-**/ios/Pods/
-**/ios/build/
-**/ios/Runner.xcworkspace/
-**/ios/Runner.xcarchive/
-
-# macOS
-**/macos/Flutter/ephemeral/
-**/macos/Flutter/Flutter-Debug.app/
-**/macos/Flutter/Flutter-Release.app/
-**/macos/Flutter/Flutter-Profile.app/
-**/macos/Pods/
-**/macos/build/
-
-# Windows
-**/windows/flutter/ephemeral/
-**/windows/build/
-
-# Linux
-**/linux/flutter/ephemeral/
-**/linux/build/
-
-# Web
-**/web/.dart_tool/
-**/web/.flutter-plugins
-
-# Xcode
-*.xcuserstate
-*.xcuserdata
-*.xcuserdatad
-*.moved-aside
-DerivedData/
-*.xcworkspace
-*.xccheckout
-!default.xcworkspace
-
-# CocoaPods
-Pods/
-Podfile.lock
-
-# Other
-.env
-*.log
-*.tmp
-*.swp
-*.swo
-
-# Sentry / crash dumps
-*.dmp
-
- Firebase configs (optioneel—haal weg als je wél wil committen)
- google-services.json
- GoogleService-Info.plist
+ bin/kernel.exe
+target
