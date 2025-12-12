@@ -19,7 +19,7 @@
 
 <script>
 	import { onMount } from 'svelte';
-	import { kernelFetch } from '$lib/api';
+	import { kernelFetch } from '../../../../kernel_ui/lib/api';
 	import orb from '$lib/assets/orb_enkel.JPG';
     import logo from '$lib/assets/logo.png';
 

@@ -6,7 +6,7 @@
 
 <script>
   import { onMount } from "svelte";
-  import { api } from "$lib/api";
+  import { api } from "../../../kernel_ui/lib/api";
   import logo from '$lib/assets/logo.png';
 
   let statusText = "Connecting to ELYSIA Kernel…";

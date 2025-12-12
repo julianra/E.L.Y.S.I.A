@@ -1,7 +1,7 @@
 <!-- kernel_ui/src-tauri/src/routes/admin/setup/+page.svelte -->
 <script>
   import logo from "../../../lib/assets/logo.png";
-  import { api } from '$lib/api';
+  import { api } from '../../../../../kernel_ui/lib/api';
 
   let username = "";
   let password = "";

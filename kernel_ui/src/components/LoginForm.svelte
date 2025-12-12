@@ -2,38 +2,73 @@
 📍 FILE: src/components/LoginForm.svelte
 📝 ROLE:
   Admin login UI.
-  Zet expliciet authenticated state bij succes.
 ====================================================================== -->
 
 <script lang="ts">
   import { login } from "../api/kernel";
   import { authToken, isAuthenticated } from "../stores/kernel";
 
+  import CenterLayout from "./CenterLayout.svelte";
+  import Orb from "./Orb.svelte";
+
+  let username = "admin";
   let password = "";
-  let error: string | null = null;
-
-  async function submit() {
-    error = null;
-
-    const res = await login("admin", password);
-
-    if (!res.success) {
-      error = res.error;
-      return;
-    }
-
-    authToken.set(res.token);
-    isAuthenticated.set(true);
-  }
+  let loading = false;
+  let error = "";
 </script>
 
-<h2>Admin Login</h2>
+<CenterLayout>
+  <Orb size={150} />
 
-<label for="pw">Password</label>
-<input id="pw" type="password" bind:value={password} />
+  <div class="card">
+    <h1>Admin Login</h1>
 
-<button on:click={submit}>Login</button>
+    <input disabled bind:value={username} />
+    <input type="password" bind:value={password} />
 
-{#if error}
-  <p class="error">{error}</p>
-{/if}
+    <button
+      on:click={async () => {
+        loading = true;
+        error = "";
+        const res = await login(username, password);
+        if (!res.success) error = res.error;
+        else {
+          authToken.set(res.token);
+          isAuthenticated.set(true);
+        }
+        loading = false;
+      }}
+      disabled={loading}
+    >
+      {loading ? "Connecting…" : "Login"}
+    </button>
+
+    {#if error}<p class="error">{error}</p>{/if}
+  </div>
+</CenterLayout>
+
+<style>
+  .card {
+    width: 340px;
+    padding: 26px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14);
+    backdrop-filter: blur(12px);
+  }
+
+  input {
+    width: 90%;
+    padding: 11px;
+    margin: 6px 0;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    border: none;
+    color: white;
+  }
+
+  .error {
+    color: #ff6b6b;
+    margin-top: 8px;
+  }
+</style>
