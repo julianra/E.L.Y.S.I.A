@@ -1,8 +1,0 @@
-[package]
-name = "elysia_starter"
-version = "0.1.0"
-edition = "2021"
-
-[[bin]]
-name = "elysia_starter"
-path = "src/main.rs"
