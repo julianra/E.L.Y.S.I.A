@@ -1,0 +1,9 @@
+service:
+  host: 127.0.0.1
+  port: 8123
+
+model:
+  provider: ollama
+  name: llama3
+  endpoint: http://127.0.0.1:11434
+  timeout_seconds: 120
