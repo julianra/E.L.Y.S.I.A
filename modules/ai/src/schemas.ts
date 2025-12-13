@@ -1,19 +1,20 @@
-// src/schemas.ts
+// =========================================================
+// 📍 FILE: modules/ai/src/schemas.ts
+// 📝 ROLE:
+//   Contracts Kernel <-> AI-module
+// =========================================================
 
-export type AITaskType =
-  | "generate"
-  | "summarize"
-  | "classify"
-  | "extract";
+export type AITask = "generate";
 
-export interface AIRequest {
-  task: AITaskType;
+export interface AIExecuteRequest {
+  task: AITask;
   input: string;
   context?: Record<string, string>;
 }
 
-export interface AIResponse {
+export interface AIExecuteResponse {
   success: boolean;
   output: string;
   tokens: number;
+  error?: string | null;
 }
