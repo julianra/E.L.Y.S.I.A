@@ -2,20 +2,26 @@
 📍 FILE: src/components/Viewport.svelte
 📝 ROLE:
   Enige echte fullscreen container.
-  Beheert viewport, centrering en voorkomt scroll.
+  Beheert viewport en globale overlays (Orb, alerts, HUD).
 ========================================================= -->
+
+<script lang="ts">
+  import { isAuthenticated } from "../stores/kernel";
+  import OrbNav from "./OrbNav.svelte";
+</script>
 
 <div class="viewport">
   <slot />
+
+  {#if $isAuthenticated}
+    <OrbNav />
+  {/if}
 </div>
 
 <style>
   .viewport {
     position: relative;
     min-height: 100vh;
-
-    /* ❌ NIET */
-    /* overflow: hidden; */
 
     background: radial-gradient(
       ellipse at center,
@@ -24,4 +30,3 @@
     );
   }
 </style>
-

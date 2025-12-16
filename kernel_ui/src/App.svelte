@@ -1,13 +1,15 @@
 <!-- =========================================================
 📍 FILE: src/App.svelte
 📝 ROLE:
-  Centrale router / bootstrapper van de Kernel UI.
+  Centrale router / bootstrapper van de ELYSIA Kernel UI.
+  Bevat GEEN visuele overlays (Orb, HUD, alerts).
 ========================================================= -->
 
 <script lang="ts">
   import { onMount } from "svelte";
 
   import { api } from "./lib/api";
+
   import {
     kernelOnline,
     adminExists,
@@ -18,7 +20,6 @@
   import { currentPage } from "./stores/router";
 
   import Viewport from "./components/Viewport.svelte";
-  import OrbNav from "./components/OrbNav.svelte";
 
   import AdminSetup from "./pages/AdminSetup.svelte";
   import Login from "./pages/Login.svelte";
@@ -30,51 +31,70 @@
   onMount(async () => {
     loading = true;
 
-    const status = await api("/status");
+    try {
+      // =========================
+      // Kernel status
+      // =========================
+      const status = await api("/status");
 
-    if (!status || status.success === false) {
+      if (!status || status.success === false) {
+        kernelOnline.set(false);
+        currentPage.set("start");
+        loading = false;
+        return;
+      }
+
+      kernelOnline.set(true);
+
+      // =========================
+      // Admin existence check
+      // =========================
+      const res = await api("/auth/has_admin");
+
+      if (!res || res.success === false) {
+        currentPage.set("start");
+        loading = false;
+        return;
+      }
+
+      adminExists.set(res.exists);
+
+      // =========================
+      // Routing decision
+      // =========================
+      if (!res.exists) {
+        currentPage.set("admin-setup");
+        loading = false;
+        return;
+      }
+
+      const token = localStorage.getItem("elysia_admin_token");
+
+      if (token) {
+        authToken.set(token);
+        isAuthenticated.set(true);
+        currentPage.set("dashboard");
+      } else {
+        isAuthenticated.set(false);
+        currentPage.set("login");
+      }
+    } catch (err) {
+      console.error("Bootstrap error:", err);
       kernelOnline.set(false);
-      currentPage.set("loading");
+      currentPage.set("start");
+    } finally {
       loading = false;
-      return;
     }
-
-    kernelOnline.set(true);
-
-    const res = await api("/auth/has_admin");
-
-    if (!res || res.success === false) {
-      currentPage.set("loading");
-      loading = false;
-      return;
-    }
-
-    adminExists.set(res.exists);
-
-    if (!res.exists) {
-      currentPage.set("admin_setup");
-      loading = false;
-      return;
-    }
-
-    const token = localStorage.getItem("elysia_admin_token");
-    if (token) {
-      authToken.set(token);
-      isAuthenticated.set(true);
-      currentPage.set("dashboard");
-    } else {
-      currentPage.set("login");
-    }
-
-    loading = false;
   });
 </script>
 
-<!-- MAIN VIEW -->
+<!-- =========================================================
+  MAIN VIEWPORT
+========================================================= -->
 <Viewport>
   {#if loading}
     <Loading />
-  {:else if $currentPage === "admin_setup"}
+  {:else if $currentPage === "admin-setup"}
     <AdminSetup />
   {:else if $currentPage === "login"}
     <Login />
@@ -84,8 +104,3 @@
     <Loading />
   {/if}
 </Viewport>
-
-<!-- ORB NAVIGATION (NA LOGIN) -->
-{#if $isAuthenticated}
-  <OrbNav />
-{/if}

@@ -1,19 +1,28 @@
 <!-- =========================================================
 📍 FILE: src/components/Orb.svelte
 📝 ROLE:
-  ELYSIA Orb – navigatie-entiteit.
-  Render image als echte <img> voor maximale betrouwbaarheid.
+  ELYSIA Orb – pure visuele kern
 ========================================================= -->
 
 <script lang="ts">
+  import { createEventDispatcher } from "svelte";
+
   export let size = 72;
   const SRC = `${import.meta.env.BASE_URL}assets/orb_enkel.jpg`;
+
+  const dispatch = createEventDispatcher();
+
+  function handleClick() {
+    dispatch("toggle");
+  }
 </script>
 
-
-<div class="orb" style="width: {size}px; height: {size}px;">
+<div
+  class="orb"
+  style="width:{size}px;height:{size}px;"
+  on:click={handleClick}
+>
   <div class="glow"></div>
-
   <img class="orb-img" src={SRC} alt="ELYSIA Orb" draggable="false" />
 </div>
 
@@ -21,8 +30,8 @@
   .orb {
     position: relative;
     border-radius: 50%;
-    overflow: hidden; /* 🔑 clip image netjes rond */
-    z-index: 1;
+    overflow: hidden;
+    cursor: pointer;
 
     box-shadow:
       0 0 18px rgba(90,120,255,0.55),
@@ -33,39 +42,28 @@
   }
 
   .orb-img {
-    position: absolute;
-    inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;        /* 🔑 altijd gevuld */
-    object-position: center;
-    display: block;
-
-    /* tijdelijke fallback zichtbaar maken zelfs als image donker is */
-    background: rgba(20, 24, 40, 0.9);
+    object-fit: cover;
   }
 
   .glow {
     position: absolute;
     inset: -10px;
     border-radius: 50%;
-
-    background:
-      radial-gradient(
-        circle,
-        rgba(120,150,255,0.45),
-        rgba(120,150,255,0.15) 40%,
-        transparent 70%
-      );
-
+    background: radial-gradient(
+      circle,
+      rgba(120,150,255,0.45),
+      rgba(120,150,255,0.15) 40%,
+      transparent 70%
+    );
     filter: blur(14px);
-    z-index: -1; /* mag nu wél, want orb heeft overflow hidden en img zit bovenin */
-    pointer-events: none;
+    z-index: -1;
   }
 
   @keyframes orb-float {
-    0%   { transform: translateY(0); }
-    50%  { transform: translateY(-6px); }
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
     100% { transform: translateY(0); }
   }
 </style>
