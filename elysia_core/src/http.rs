@@ -13,26 +13,95 @@
 //       - AI execute (simple forward stub)
 //
 // ======================================================================
-
 use axum::{
     routing::{get, post},
-    Json, Router,
+    Json,
+    Router,
+    http::{Request, StatusCode},
+    middleware::{self, Next},
+    response::{Response, IntoResponse},
+    body::Body,
 };
+
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::sync::Arc;
 
-use crate::{
-    kernel::KernelState,
-    security::{
-        hash_password,
-        verify_password,
-        get_user_password_hash,
-        user_exists,
-        insert_user,
-        create_user_token,
-    },
+use crate::KernelState;
+
+use crate::security::{
+    hash_password,
+    verify_password,
+    get_user_password_hash,
+    user_exists,
+    insert_user,
+    create_user_token,
+    validate_user_token,
 };
+
+
+async fn http_access_guard(
+    state: Arc<KernelState>,
+    req: Request<Body>,
+    next: Next,
+) -> Response {
+    let path = req.uri().path();
+    let method = req.method().as_str();
+
+    let admin_exists = user_exists(&state, "admin");
+
+    // ==================================================
+    // BOOTSTRAP MODE — NO ADMIN
+    // ==================================================
+    if !admin_exists {
+        let allowed = matches!(
+            (method, path),
+            ("GET",  "/auth/has_admin")
+                | ("POST", "/auth/create_admin")
+                | ("POST", "/auth/login")
+                | ("GET",  "/status")
+        );
+
+        if !allowed {
+            return StatusCode::FORBIDDEN.into_response();
+        }
+
+        return next.run(req).await;
+    }
+
+    // ==================================================
+    // ADMIN MODE — ADMIN EXISTS
+    // ==================================================
+
+    let public = matches!(
+        (method, path),
+        ("GET",  "/auth/has_admin")
+            | ("POST", "/auth/login")
+    );
+
+    if public {
+        return next.run(req).await;
+    }
+
+    let auth_header = req
+        .headers()
+        .get("Authorization")
+        .and_then(|h| h.to_str().ok());
+
+    let token = match auth_header {
+        Some(h) if h.starts_with("Bearer ") => &h[7..],
+        _ => return StatusCode::UNAUTHORIZED.into_response(),
+    };
+
+    let Some(username) = validate_user_token(token) else {
+        return StatusCode::UNAUTHORIZED.into_response();
+    };
+
+    if username != "admin" {
+        return StatusCode::FORBIDDEN.into_response();
+    }
+
+    next.run(req).await
+}
 
 // ======================================================================
 // MODULES (Global Module View — fase 1: native only)
@@ -336,16 +405,21 @@ pub fn build_router(state: Arc<KernelState>) -> Router {
             move || status(s.clone())
         }))
 
-        // ---------- AI ----------
+        // ---------- AI (blocked by guard) ----------
         .route("/ai/execute", post({
             let s = state.clone();
             move |payload| ai_execute(s.clone(), payload)
         }))
 
-                // ---------- MODULES ----------
+        // ---------- MODULES ----------
         .route("/modules", get({
             let s = state.clone();
             move || list_modules(s.clone())
         }))
 
+        // ---------- GLOBAL GUARD ----------
+        .layer(middleware::from_fn({
+            let s = state.clone();
+            move |req, next| http_access_guard(s.clone(), req, next)
+        }))
 }
