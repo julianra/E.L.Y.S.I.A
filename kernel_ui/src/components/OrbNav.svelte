@@ -7,8 +7,10 @@
   - GEEN router, GEEN kernel calls, GEEN AI (nog)
 ========================================================= -->
 
+// 📍 FILE: src/components/OrbNav.svelte
 <script lang="ts">
   import Orb from "./Orb.svelte";
+  import { currentPage } from "../stores/router";  // Importing the currentPage store
 
   let open = false;
 
@@ -18,7 +20,6 @@
     hint?: string;
   };
 
-  // UI placeholders (later: kernel-intents + capability gating)
   const actions: OrbAction[] = [
     { id: "overview", label: "Overzicht", hint: "Kernel status samenvatting" },
     { id: "modules", label: "Modules", hint: "Installed / paired modules" },
@@ -36,7 +37,6 @@
     open = false;
   }
 
-  // 180° boog van links naar rechts (boven de orb)
   function angleFor(index: number, total: number) {
     if (total <= 1) return -90;
     const start = -180;
@@ -46,8 +46,10 @@
   }
 
   function onAction(action: OrbAction) {
-    // UI-only: voorlopig enkel sluiten (later kernel-intent)
-    console.log("[ORB] action:", action.id);
+    // When 'modules' is clicked, set the currentPage to 'modules'
+    if (action.id === "modules") {
+      currentPage.set("modules");
+    }
     close();
   }
 </script>

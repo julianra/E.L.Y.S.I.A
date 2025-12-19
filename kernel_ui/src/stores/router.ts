@@ -9,6 +9,7 @@ export type Page =
   | "start"
   | "admin-setup"
   | "login"
-  | "dashboard";
+  | "dashboard"
+  | "modules";
 
 export const currentPage = writable<Page>("start");

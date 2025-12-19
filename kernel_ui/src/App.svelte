@@ -7,6 +7,7 @@
 
 <script lang="ts">
   import { onMount } from "svelte";
+  import Modules from "./pages/Modules.svelte"; // Ensure this import exists
 
   import { api } from "./lib/api";
 
@@ -100,6 +101,8 @@
     <Login />
   {:else if $currentPage === "dashboard"}
     <Dashboard />
+  {:else if $currentPage === "modules"} <!-- Ensure this condition is here -->
+    <Modules />
   {:else}
     <Loading />
   {/if}
