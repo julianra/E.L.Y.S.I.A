@@ -1,0 +1,9 @@
+name = "ORB"
+version = "0.1.0"
+description = "ORB – interface en assistent voor ELYSIA"
+entrypoint = "orb"
+
+permissions = [
+  "ui",
+  "events"
+]

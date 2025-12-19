@@ -1,0 +1,4 @@
+name = "ORB"
+version = "0.1.0"
+entrypoint = "orb"
+description = "Orb interface module"

@@ -267,14 +267,6 @@ pub struct StatusResponse {
     pub modules: usize,
 }
 
-async fn status(state: Arc<KernelState>) -> Json<StatusResponse> {
-    Json(StatusResponse {
-        status: "online".into(),
-        version: "2.1".into(),
-        db: "ok".into(),
-        modules: state.modules.len(),
-    })
-}
  
 
 //
