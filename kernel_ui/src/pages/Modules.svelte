@@ -2,66 +2,77 @@
 📍 FILE: src/pages/Modules.svelte
 📝 ROLE:
   Modulebeheer pagina (UI-only, fase 1)
+  - Leest native modules read-only van de Kernel via /modules
+  - UI toont extra velden als placeholders (fase 2)
 ========================================================= -->
 
 <script lang="ts">
-  type Permission =
-    | "filesystem"
-    | "network"
-    | "events"
-    | "ui";
+  import { onMount } from "svelte";
+  import { api } from "../lib/api";
+
+
+  type Permission = "filesystem" | "network" | "events" | "ui";
 
   type Module = {
+    // Kernel truth (fase 1)
     id: string;
     name: string;
+    kind: string;   // "native"
+    status: string; // "loaded"
+
+    // UI-only placeholders (fase 1)
     description: string;
     enabled: boolean;
     permissions: Permission[];
     lastLog: string;
   };
 
-  let modules: Module[] = [
-    {
-      id: "marthe",
-      name: "MARTHE",
-      description: "Planning & agenda intelligentie",
-      enabled: true,
-      permissions: ["events", "ui"],
-      lastLog: "Taakplanning uitgevoerd (2 min geleden)"
-    },
-    {
-      id: "junk",
-      name: "JUNK",
-      description: "Geheugen & context opslag",
-      enabled: true,
-      permissions: ["filesystem", "events"],
-      lastLog: "Context snapshot opgeslagen"
-    },
-    {
-      id: "catnip",
-      name: "CATNIP",
-      description: "IoT & device integratie",
-      enabled: false,
-      permissions: ["network"],
-      lastLog: "Laatste activiteit: gisteren"
-    }
-  ];
+  let modules: Module[] = [];
+  let selected: Module | null = null;
+  let error: string | null = null;
+const ALL_PERMISSIONS: Permission[] = [
+  "filesystem",
+  "network",
+  "events",
+  "ui"
+];
 
-  let selected: Module | null = modules[0];
+ onMount(async () => {
+  try {
+    const data: Array<{
+      id: string;
+      name: string;
+      kind: string;
+      status: string;
+    }> = await api("/modules");
+
+    // Verrijk met UI-only defaults (fase 1 placeholders)
+    modules = data.map((m) => ({
+      ...m,
+      description: "Geen beschrijving beschikbaar",
+      enabled: m.status === "loaded",
+      permissions: [],
+      lastLog: "Geen activiteit"
+    }));
+
+    selected = modules[0] ?? null;
+    error = null;
+  } catch (e: any) {
+    error = e?.message ?? "Kernel niet bereikbaar";
+    modules = [];
+    selected = null;
+  }
+});
+
 
   function togglePermission(p: Permission) {
     if (!selected) return;
 
     selected.permissions = selected.permissions.includes(p)
-      ? selected.permissions.filter(x => x !== p)
+      ? selected.permissions.filter((x) => x !== p)
       : [...selected.permissions, p];
 
-    modules = [...modules];
-  }
-
-  function toggleEnabled() {
-    if (!selected) return;
-    selected.enabled = !selected.enabled;
+    // trigger reactivity
     modules = [...modules];
   }
 
@@ -75,6 +86,9 @@
     <div>
       <h1>Modules</h1>
       <p>Beheer plugins, permissies en recente activiteit.</p>
+      {#if error}
+        <p class="error">Kernel niet bereikbaar: {error}</p>
+      {/if}
     </div>
 
     <button class="primary" on:click={addModule}>
@@ -87,21 +101,28 @@
       MODULE LIJST
     ========================== -->
     <aside class="module-list">
-      {#each modules as m}
-        <button
-          class="module-card {selected?.id === m.id ? 'active' : ''}"
-          on:click={() => (selected = m)}
-        >
-          <div class="top">
-            <strong>{m.name}</strong>
-            <span class="status {m.enabled ? 'on' : 'off'}">
-              {m.enabled ? "Actief" : "Uitgeschakeld"}
-            </span>
-          </div>
+      {#if modules.length === 0}
+        <div class="empty">
+          <strong>Geen modules</strong>
+          <small>Er zijn momenteel geen native modules geladen.</small>
+        </div>
+      {:else}
+        {#each modules as m}
+          <button
+            class="module-card {selected?.id === m.id ? 'active' : ''}"
+            on:click={() => (selected = m)}
+          >
+            <div class="top">
+              <strong>{m.name}</strong>
+              <span class="status {m.status === 'loaded' ? 'on' : 'off'}">
+                {m.status === "loaded" ? "Actief" : "Inactief"}
+              </span>
+            </div>
 
-          <small>{m.lastLog}</small>
-        </button>
-      {/each}
+            <small>{m.lastLog}</small>
+          </button>
+        {/each}
+      {/if}
     </aside>
 
     <!-- =========================
@@ -114,8 +135,8 @@
 
         <div class="section">
           <h3>Status</h3>
-          <button class="toggle" on:click={toggleEnabled}>
-            {selected.enabled ? "Uitschakelen" : "Inschakelen"}
+          <button class="toggle" disabled title="Fase 2">
+            {selected.status === "loaded" ? "Actief" : "Inactief"}
           </button>
         </div>
 
@@ -123,12 +144,13 @@
           <h3>Permissies</h3>
 
           <div class="permissions">
-            {#each ["filesystem", "network", "events", "ui"] as p}
+            {#each ALL_PERMISSIONS as p}
               <label>
                 <input
                   type="checkbox"
                   checked={selected.permissions.includes(p)}
                   on:change={() => togglePermission(p)}
+
                 />
                 <span>{p}</span>
               </label>
@@ -138,9 +160,7 @@
 
         <div class="section">
           <h3>Laatste activiteit</h3>
-          <div class="log">
-            {selected.lastLog}
-          </div>
+          <div class="log">{selected.lastLog}</div>
         </div>
       {:else}
         <p>Selecteer een module.</p>
@@ -165,13 +185,18 @@
   h1 {
     font-size: 28px;
     margin: 0;
-    
   }
 
   header p {
     opacity: 0.7;
     margin-top: 4px;
-    
+  }
+
+  .error {
+    margin-top: 10px;
+    opacity: 0.9;
+    color: #ff9a9a;
+    font-size: 13px;
   }
 
   .primary {
@@ -195,9 +220,22 @@
     gap: 10px;
   }
 
+  .empty {
+    background: rgba(20, 25, 40, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 14px;
+  }
+
+  .empty small {
+    display: block;
+    margin-top: 6px;
+    opacity: 0.7;
+  }
+
   .module-card {
     background: rgba(20, 25, 40, 0.85);
-    border: 1px solid rgba(255,255,255,0.06);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 14px;
     padding: 14px;
     text-align: left;
@@ -206,8 +244,8 @@
   }
 
   .module-card.active {
-    border-color: rgba(120,150,255,0.4);
-    box-shadow: 0 0 24px rgba(120,150,255,0.18);
+    border-color: rgba(120, 150, 255, 0.4);
+    box-shadow: 0 0 24px rgba(120, 150, 255, 0.18);
   }
 
   .module-card .top {
@@ -231,7 +269,7 @@
 
   .details {
     background: rgba(15, 18, 30, 0.9);
-    border: 1px solid rgba(255,255,255,0.06);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 20px;
     padding: 28px;
   }
@@ -247,11 +285,12 @@
 
   .toggle {
     background: none;
-    border: 1px solid rgba(255,255,255,0.15);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 12px;
     padding: 8px 14px;
     color: white;
-    cursor: pointer;
+    cursor: not-allowed;
+    opacity: 0.7;
   }
 
   .permissions {
@@ -268,7 +307,7 @@
   }
 
   .log {
-    background: rgba(0,0,0,0.35);
+    background: rgba(0, 0, 0, 0.35);
     border-radius: 12px;
     padding: 12px;
     font-family: monospace;

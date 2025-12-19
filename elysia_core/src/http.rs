@@ -34,6 +34,35 @@ use crate::{
     },
 };
 
+// ======================================================================
+// MODULES (Global Module View — fase 1: native only)
+// ======================================================================
+
+#[derive(Serialize)]
+pub struct ModuleInfo {
+    pub id: String,
+    pub name: String,
+    pub kind: String,   // "native"
+    pub status: String // "loaded"
+}
+
+async fn list_modules(state: Arc<KernelState>) -> Json<Vec<ModuleInfo>> {
+    let modules = state
+        .modules
+        .iter()
+        .map(|m| ModuleInfo {
+            id: m.name().to_lowercase(),
+            name: m.name().to_string(),
+            kind: "native".into(),
+            status: "loaded".into(),
+        })
+        .collect();
+
+    Json(modules)
+}
+
+
+
 //
 // ======================================================================
 //  ADMIN EXISTS
@@ -156,14 +185,15 @@ pub struct StatusResponse {
     pub modules: usize,
 }
 
-async fn status(_state: Arc<KernelState>) -> Json<StatusResponse> {
+async fn status(state: Arc<KernelState>) -> Json<StatusResponse> {
     Json(StatusResponse {
         status: "online".into(),
         version: "2.1".into(),
         db: "ok".into(),
-        modules: 0,
+        modules: state.modules.len(),
     })
 }
+
 
 //
 // ======================================================================
@@ -311,4 +341,11 @@ pub fn build_router(state: Arc<KernelState>) -> Router {
             let s = state.clone();
             move |payload| ai_execute(s.clone(), payload)
         }))
+
+                // ---------- MODULES ----------
+        .route("/modules", get({
+            let s = state.clone();
+            move || list_modules(s.clone())
+        }))
+
 }
