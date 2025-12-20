@@ -28,13 +28,16 @@ use std::sync::Arc;
 
 use crate::KernelState;
 async fn status(state: Arc<KernelState>) -> Json<StatusResponse> {
+    let count = state.modules.read().await.len(); // 🔒 single source of truth
+
     Json(StatusResponse {
         status: "online".into(),
         version: "2.1".into(),
         db: "ok".into(),
-        modules: state.modules.len(), // 🔒 single source of truth
+        modules: count,
     })
 }
+
 
 use crate::security::{
     hash_password,
@@ -128,24 +131,29 @@ pub struct ModuleInfo {
 async fn list_modules(state: Arc<KernelState>) -> Json<Vec<ModuleInfo>> {
     use crate::plugins::loader::PluginLoader;
 
+    // 1️⃣ Scan plugins folder → installed truth
     let loader = PluginLoader::new("plugins");
     let found = loader.scan();
+
+    // 2️⃣ Lees actieve registry → loaded truth
+    let registry = state.modules.read().await;
 
     let modules = found
         .into_iter()
         .map(|pl| {
             let name = pl.manifest.name.clone();
 
-            // 🔒 ENIGE juiste check: zit er een geladen module met deze naam?
-            let loaded = state.modules.iter().any(|m| m.name() == name);
+            let loaded = registry
+                .iter()
+                .any(|m| m.name() == name);
 
             ModuleInfo {
-                id: name.clone(),          // fase 1: name == id
+                id: name.clone(),        // fase 1: name == id
                 name,
                 kind: "module".into(),
                 installed: true,
                 loaded,
-                paired: false,             // later
+                paired: false,           // fase 1
             }
         })
         .collect();

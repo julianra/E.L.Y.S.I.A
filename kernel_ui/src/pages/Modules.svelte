@@ -12,6 +12,46 @@
 
 
   type Permission = "filesystem" | "network" | "events" | "ui";
+let pollTimer: number | null = null;
+
+async function loadModules() {
+  try {
+    const data: Array<{
+      id: string;
+      name: string;
+      installed: boolean;
+      loaded: boolean;
+      paired: boolean;
+    }> = await api("/modules");
+
+    modules = data.map((m) => ({
+      id: m.id,
+      name: m.name,
+
+      installed: m.installed,
+      loaded: m.loaded,
+      paired: m.paired,
+
+      description: "Geen beschrijving beschikbaar",
+      enabled: m.loaded,
+      permissions: [],
+      lastLog: "Geen activiteit"
+    }));
+
+    // behoud selectie indien mogelijk
+    if (selected) {
+      selected = modules.find(m => m.id === selected?.id) ?? null;
+    } else {
+      selected = modules[0] ?? null;
+    }
+
+    error = null;
+  } catch (e: any) {
+    error = e?.message ?? "Kernel niet bereikbaar";
+    modules = [];
+    selected = null;
+  }
+}
 
   type Module = {
     // Kernel truth (fase 1)
@@ -39,39 +79,20 @@ const ALL_PERMISSIONS: Permission[] = [
   "ui"
 ];
 
- onMount(async () => {
-  try {
-    const data: Array<{
-  id: string;
-  name: string;
-  installed: boolean;
-  loaded: boolean;
-  paired: boolean;
-}> = await api("/modules");
+onMount(() => {
+  loadModules();
 
-modules = data.map((m) => ({
-  id: m.id,
-  name: m.name,
+  pollTimer = window.setInterval(() => {
+    loadModules();
+  }, 2000);
 
-  installed: m.installed,
-  loaded: m.loaded,
-  paired: m.paired,
-
-  description: "Geen beschrijving beschikbaar",
-  enabled: m.loaded,
-  permissions: [],
-  lastLog: "Geen activiteit"
-}));
-
-    selected = modules[0] ?? null;
-    error = null;
-  } catch (e: any) {
-    error = e?.message ?? "Kernel niet bereikbaar";
-    modules = [];
-    selected = null;
-  }
+  return () => {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  };
 });
-
 
   function togglePermission(p: Permission) {
     if (!selected) return;

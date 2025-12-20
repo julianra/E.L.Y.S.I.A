@@ -26,8 +26,11 @@ impl EventBus {
             payload,
         };
 
-        // FIX: Modules are ARC clones → 'static safe
-        let modules: Vec<_> = state.modules.iter().collect();
+        // 🔒 CORRECT: read-lock, daarna itereren
+        let modules = {
+            let registry = state.modules.read().await;
+            registry.iter().collect::<Vec<_>>()
+        };
 
         for module in modules {
             let module_clone = module.clone();

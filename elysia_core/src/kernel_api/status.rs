@@ -1,23 +1,26 @@
 // ======================================================================
 // 📍 FILE: elysia_core/src/kernel_api/status.rs
-// 📝 Internal Kernel Status API (no HTTP, no JSON).
-//     Pure data for monitoring via IPC.
 // ======================================================================
 
+use serde::Serialize;
+use std::sync::Arc;
 use crate::kernel::KernelState;
 
+#[derive(Serialize)]
 pub struct KernelStatus {
-    pub running: bool,
+    pub status: String,
+    pub version: String,
+    pub db: String,
     pub modules: usize,
-    pub db_online: bool,
-    pub version: &'static str,
 }
 
-pub fn get_kernel_status(state: &KernelState) -> KernelStatus {
+pub async fn get_kernel_status(state: &Arc<KernelState>) -> KernelStatus {
+    let count = state.modules.read().await.len(); // 🔒 single source of truth
+
     KernelStatus {
-        running: true,
-        modules: state.modules.len(),
-        db_online: true,
-        version: "2.1",
+        status: "online".into(),
+        version: "2.1".into(),
+        db: "ok".into(),
+        modules: count,
     }
 }
