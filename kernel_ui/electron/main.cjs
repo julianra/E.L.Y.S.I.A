@@ -23,6 +23,22 @@ let pollTimer = null
 
 const isDev = !app.isPackaged
 const PORT_CANDIDATES = [2022, 3131] // 2022 volgens je mDNS; 3131 als fallback
+function copyDir(src, dest) {
+  if (!fs.existsSync(src)) return
+
+  fs.mkdirSync(dest, { recursive: true })
+
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    const srcPath = path.join(src, entry.name)
+    const destPath = path.join(dest, entry.name)
+
+    if (entry.isDirectory()) {
+      copyDir(srcPath, destPath)
+    } else {
+      fs.copyFileSync(srcPath, destPath)
+    }
+  }
+}
 
 // ----------------------------------------------------------------------
 // Paths
@@ -71,6 +87,18 @@ function startKernel() {
   const kernelPath = getKernelPath()
   const cwd = getKernelWorkDir()
   const logPath = getKernelLogPath()
+  // --------------------------------------------------
+  // Copy bundled plugins → runtime kernel directory
+  // --------------------------------------------------
+  const bundledPlugins = isDev
+    ? path.join(__dirname, '..', '..', 'plugins')
+    : path.join(process.resourcesPath, 'plugins')
+
+  const runtimePlugins = path.join(cwd, 'plugins')
+
+  if (!fs.existsSync(runtimePlugins)) {
+    copyDir(bundledPlugins, runtimePlugins)
+  }
 
   const out = fs.createWriteStream(logPath, { flags: 'a' })
   out.write(`\n\n[UI] Starting kernel at ${new Date().toISOString()}\n`)

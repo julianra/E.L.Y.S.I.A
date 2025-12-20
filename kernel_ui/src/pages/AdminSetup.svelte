@@ -6,7 +6,8 @@
 ========================================================= -->
 
 <script lang="ts">
-  import { api } from "../lib/api";
+import { api } from "../lib/api";
+
   import { adminExists } from "../stores/kernel";
   import { currentPage } from "../stores/router";
 

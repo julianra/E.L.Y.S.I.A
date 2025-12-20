@@ -7,9 +7,9 @@
 
 <script lang="ts">
   import { onMount } from "svelte";
-  import Modules from "./pages/Modules.svelte"; // Ensure this import exists
 
-  import { api } from "./lib/api";
+import { api } from "./lib/api";
+
 
   import {
     kernelOnline,
@@ -25,6 +25,7 @@
   import AdminSetup from "./pages/AdminSetup.svelte";
   import Login from "./pages/Login.svelte";
   import Dashboard from "./pages/Dashboard.svelte";
+  import Modules from "./pages/Modules.svelte";
   import Loading from "./components/Loading.svelte";
 
   let loading = true;
@@ -33,12 +34,12 @@
     loading = true;
 
     try {
-      // =========================
-      // Kernel status
-      // =========================
-      const status = await api("/status");
+      // ==================================================
+      // BOOTSTRAP — ONLY CHECK IF ADMIN EXISTS
+      // ==================================================
+      const adminRes = await api("/auth/has_admin");
 
-      if (!status || status.success === false) {
+      if (!adminRes || adminRes.success === false) {
         kernelOnline.set(false);
         currentPage.set("start");
         loading = false;
@@ -46,24 +47,12 @@
       }
 
       kernelOnline.set(true);
+      adminExists.set(adminRes.exists);
 
-      // =========================
-      // Admin existence check
-      // =========================
-      const res = await api("/auth/has_admin");
-
-      if (!res || res.success === false) {
-        currentPage.set("start");
-        loading = false;
-        return;
-      }
-
-      adminExists.set(res.exists);
-
-      // =========================
-      // Routing decision
-      // =========================
-      if (!res.exists) {
+      // ==================================================
+      // ROUTING DECISION
+      // ==================================================
+      if (!adminRes.exists) {
         currentPage.set("admin-setup");
         loading = false;
         return;
@@ -79,6 +68,7 @@
         isAuthenticated.set(false);
         currentPage.set("login");
       }
+
     } catch (err) {
       console.error("Bootstrap error:", err);
       kernelOnline.set(false);
@@ -101,7 +91,7 @@
     <Login />
   {:else if $currentPage === "dashboard"}
     <Dashboard />
-  {:else if $currentPage === "modules"} <!-- Ensure this condition is here -->
+  {:else if $currentPage === "modules"}
     <Modules />
   {:else}
     <Loading />

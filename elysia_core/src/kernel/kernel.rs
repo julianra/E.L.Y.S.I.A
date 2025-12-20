@@ -66,10 +66,10 @@ impl Kernel {
         // -------------------------
         info!("[CORE] Scanning plugins/");
         let loader = PluginLoader::new("plugins");
-        let found = loader.scan();
+        let mut found = loader.scan();
 
         unsafe {
-            loader.load_all(&mut registry, found)?;
+            loader.load_all(&mut registry, &mut found)?;
         }
 
         info!("[CORE] Loaded {} modules", registry.len());

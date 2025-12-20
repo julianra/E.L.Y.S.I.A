@@ -27,8 +27,6 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 use crate::KernelState;
-use crate::kernel_api::get_kernel_status;
-
 async fn status(state: Arc<KernelState>) -> Json<StatusResponse> {
     Json(StatusResponse {
         status: "online".into(),
@@ -121,26 +119,39 @@ async fn http_access_guard(
 pub struct ModuleInfo {
     pub id: String,
     pub name: String,
-    pub kind: String,   // "native"
-    pub status: String // "loaded"
+    pub kind: String,      // "module"
+    pub installed: bool,
+    pub loaded: bool,
+    pub paired: bool,     // false (fase 1)
 }
 
 async fn list_modules(state: Arc<KernelState>) -> Json<Vec<ModuleInfo>> {
-    let modules = state
-        .modules
-        .iter()
-        .map(|m| ModuleInfo {
-            id: m.name().to_lowercase(),
-            name: m.name().to_string(),
-            kind: "native".into(),
-            status: "loaded".into(),
+    use crate::plugins::loader::PluginLoader;
+
+    let loader = PluginLoader::new("plugins");
+    let found = loader.scan();
+
+    let modules = found
+        .into_iter()
+        .map(|pl| {
+            let name = pl.manifest.name.clone();
+
+            // 🔒 ENIGE juiste check: zit er een geladen module met deze naam?
+            let loaded = state.modules.iter().any(|m| m.name() == name);
+
+            ModuleInfo {
+                id: name.clone(),          // fase 1: name == id
+                name,
+                kind: "module".into(),
+                installed: true,
+                loaded,
+                paired: false,             // later
+            }
         })
         .collect();
 
     Json(modules)
 }
-
-
 
 //
 // ======================================================================

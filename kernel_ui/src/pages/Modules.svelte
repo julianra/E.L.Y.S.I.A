@@ -17,8 +17,10 @@
     // Kernel truth (fase 1)
     id: string;
     name: string;
-    kind: string;   // "native"
-    status: string; // "loaded"
+    installed: boolean;
+loaded: boolean;
+paired: boolean;
+
 
     // UI-only placeholders (fase 1)
     description: string;
@@ -40,20 +42,26 @@ const ALL_PERMISSIONS: Permission[] = [
  onMount(async () => {
   try {
     const data: Array<{
-      id: string;
-      name: string;
-      kind: string;
-      status: string;
-    }> = await api("/modules");
+  id: string;
+  name: string;
+  installed: boolean;
+  loaded: boolean;
+  paired: boolean;
+}> = await api("/modules");
 
-    // Verrijk met UI-only defaults (fase 1 placeholders)
-    modules = data.map((m) => ({
-      ...m,
-      description: "Geen beschrijving beschikbaar",
-      enabled: m.status === "loaded",
-      permissions: [],
-      lastLog: "Geen activiteit"
-    }));
+modules = data.map((m) => ({
+  id: m.id,
+  name: m.name,
+
+  installed: m.installed,
+  loaded: m.loaded,
+  paired: m.paired,
+
+  description: "Geen beschrijving beschikbaar",
+  enabled: m.loaded,
+  permissions: [],
+  lastLog: "Geen activiteit"
+}));
 
     selected = modules[0] ?? null;
     error = null;
@@ -104,7 +112,7 @@ const ALL_PERMISSIONS: Permission[] = [
       {#if modules.length === 0}
         <div class="empty">
           <strong>Geen modules</strong>
-          <small>Er zijn momenteel geen native modules geladen.</small>
+<small>Er zijn momenteel geen modules geïnstalleerd.</small>
         </div>
       {:else}
         {#each modules as m}
@@ -114,9 +122,16 @@ const ALL_PERMISSIONS: Permission[] = [
           >
             <div class="top">
               <strong>{m.name}</strong>
-              <span class="status {m.status === 'loaded' ? 'on' : 'off'}">
-                {m.status === "loaded" ? "Actief" : "Inactief"}
-              </span>
+              <span class="status {m.loaded ? 'on' : 'off'}">
+  {#if m.loaded}
+    Actief
+  {:else if m.installed}
+    Geïnstalleerd
+  {:else}
+    Onbekend
+  {/if}
+</span>
+
             </div>
 
             <small>{m.lastLog}</small>
@@ -136,7 +151,13 @@ const ALL_PERMISSIONS: Permission[] = [
         <div class="section">
           <h3>Status</h3>
           <button class="toggle" disabled title="Fase 2">
-            {selected.status === "loaded" ? "Actief" : "Inactief"}
+{#if selected.loaded}
+  Actief
+{:else if selected.installed}
+  Geïnstalleerd (niet geladen)
+{:else}
+  Onbekend
+{/if}
           </button>
         </div>
 

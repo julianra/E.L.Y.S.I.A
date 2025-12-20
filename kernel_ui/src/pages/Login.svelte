@@ -6,6 +6,7 @@
 
 <script lang="ts">
   import { api } from "../lib/api";
+
   import { authToken, isAuthenticated } from "../stores/kernel";
   import { currentPage } from "../stores/router";
 
@@ -29,9 +30,12 @@
     if (!res?.success) {
       error = res?.error ?? "Login gefaald.";
     } else {
-      authToken.set(res.token);
-      isAuthenticated.set(true);
-      currentPage.set("dashboard");
+      localStorage.setItem("elysia_admin_token", res.token);
+
+authToken.set(res.token);
+isAuthenticated.set(true);
+currentPage.set("dashboard");
+
     }
 
     loading = false;

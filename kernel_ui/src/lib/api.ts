@@ -8,13 +8,24 @@
 // ======================================================================
 
 const BASE_URL =
-  import.meta.env.DEV ? '/api' : 'http://127.0.0.1:2022';
+  window.location.protocol === "file:"
+    ? "http://127.0.0.1:2022"
+    : import.meta.env.DEV
+      ? "/api"
+      : "http://127.0.0.1:2022";
 
 
 export async function api(
   path: string,
+  
   options: RequestInit = {}
 ): Promise<any> {
+  console.log("API CALL", {
+  base: BASE_URL,
+  path,
+  full: `${BASE_URL}${path}`
+});
+
   try {
     const token =
       typeof localStorage !== 'undefined'
@@ -51,4 +62,5 @@ export async function api(
       error: 'Kernel unreachable',
     };
   }
+  
 }
