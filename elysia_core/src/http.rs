@@ -127,9 +127,9 @@ pub struct ModuleInfo {
     pub loaded: bool,
     pub paired: bool,     // false (fase 1)
 }
-
 async fn list_modules(state: Arc<KernelState>) -> Json<Vec<ModuleInfo>> {
     use crate::plugins::loader::PluginLoader;
+    use crate::security::get_module_state;
 
     // 1️⃣ Scan plugins folder → installed truth
     let loader = PluginLoader::new("plugins");
@@ -138,27 +138,81 @@ async fn list_modules(state: Arc<KernelState>) -> Json<Vec<ModuleInfo>> {
     // 2️⃣ Lees actieve registry → loaded truth
     let registry = state.modules.read().await;
 
+    // 3️⃣ DB connection (read-only)
+    let conn = state.ctx.db();
+
     let modules = found
         .into_iter()
         .map(|pl| {
             let name = pl.manifest.name.clone();
+            let canonical_id = name.to_lowercase();
 
             let loaded = registry
                 .iter()
-                .any(|m| m.name() == name);
+                .any(|m| m.name().to_lowercase() == canonical_id);
+
+            let paired = match get_module_state(&conn, &canonical_id) {
+                Ok(Some(m)) => m.paired,
+                _ => false,
+            };
 
             ModuleInfo {
-                id: name.clone(),        // fase 1: name == id
+                id: canonical_id,
                 name,
                 kind: "module".into(),
                 installed: true,
                 loaded,
-                paired: false,           // fase 1
+                paired,
             }
         })
         .collect();
 
     Json(modules)
+}
+
+// ======================================================================
+//  MODULE PAIRING — ADMIN ONLY
+// ======================================================================
+
+async fn pair_module(
+    state: Arc<KernelState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> impl IntoResponse {
+    use crate::plugins::loader::PluginLoader;
+    use crate::security::set_module_paired;
+
+    let id = id.to_lowercase();
+
+    // Bestaat module?
+    let installed = PluginLoader::new("plugins")
+        .scan()
+        .iter()
+        .any(|p| p.manifest.name.to_lowercase() == id);
+
+    if !installed {
+        return StatusCode::NOT_FOUND;
+    }
+
+    if let Err(_) = set_module_paired(&state.ctx.db(), &id, true) {
+        return StatusCode::INTERNAL_SERVER_ERROR;
+    }
+
+    StatusCode::OK
+}
+
+async fn unpair_module(
+    state: Arc<KernelState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> impl IntoResponse {
+    use crate::security::set_module_paired;
+
+    let id = id.to_lowercase();
+
+    if let Err(_) = set_module_paired(&state.ctx.db(), &id, false) {
+        return StatusCode::INTERNAL_SERVER_ERROR;
+    }
+
+    StatusCode::OK
 }
 
 //
@@ -426,7 +480,7 @@ pub fn build_router(state: Arc<KernelState>) -> Router {
             move || status(s.clone())
         }))
 
-        // ---------- AI (blocked by guard) ----------
+        // ---------- AI ----------
         .route("/ai/execute", post({
             let s = state.clone();
             move |payload| ai_execute(s.clone(), payload)
@@ -436,6 +490,14 @@ pub fn build_router(state: Arc<KernelState>) -> Router {
         .route("/modules", get({
             let s = state.clone();
             move || list_modules(s.clone())
+        }))
+        .route("/modules/:id/pair", post({
+            let s = state.clone();
+            move |path| pair_module(s.clone(), path)
+        }))
+        .route("/modules/:id/unpair", post({
+            let s = state.clone();
+            move |path| unpair_module(s.clone(), path)
         }))
 
         // ---------- GLOBAL GUARD ----------
