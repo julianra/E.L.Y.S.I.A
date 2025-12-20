@@ -2,67 +2,24 @@
 📍 FILE: src/pages/Modules.svelte
 📝 ROLE:
   Modulebeheer pagina (UI-only, fase 1)
-  - Leest native modules read-only van de Kernel via /modules
-  - UI toont extra velden als placeholders (fase 2)
+  - Leest modules van de Kernel via /modules
+  - Laat admin manueel pairen / unpairen
 ========================================================= -->
 
 <script lang="ts">
   import { onMount } from "svelte";
   import { api } from "../lib/api";
 
-
   type Permission = "filesystem" | "network" | "events" | "ui";
-let pollTimer: number | null = null;
-
-async function loadModules() {
-  try {
-    const data: Array<{
-      id: string;
-      name: string;
-      installed: boolean;
-      loaded: boolean;
-      paired: boolean;
-    }> = await api("/modules");
-
-    modules = data.map((m) => ({
-      id: m.id,
-      name: m.name,
-
-      installed: m.installed,
-      loaded: m.loaded,
-      paired: m.paired,
-
-      description: "Geen beschrijving beschikbaar",
-      enabled: m.loaded,
-      permissions: [],
-      lastLog: "Geen activiteit"
-    }));
-
-    // behoud selectie indien mogelijk
-    if (selected) {
-      selected = modules.find(m => m.id === selected?.id) ?? null;
-    } else {
-      selected = modules[0] ?? null;
-    }
-
-    error = null;
-  } catch (e: any) {
-    error = e?.message ?? "Kernel niet bereikbaar";
-    modules = [];
-    selected = null;
-  }
-}
 
   type Module = {
-    // Kernel truth (fase 1)
     id: string;
     name: string;
     installed: boolean;
-loaded: boolean;
-paired: boolean;
+    loaded: boolean;
+    paired: boolean;
 
-
-    // UI-only placeholders (fase 1)
+    // UI-only placeholders
     description: string;
     enabled: boolean;
     permissions: Permission[];
@@ -72,27 +29,63 @@ paired: boolean;
   let modules: Module[] = [];
   let selected: Module | null = null;
   let error: string | null = null;
-const ALL_PERMISSIONS: Permission[] = [
-  "filesystem",
-  "network",
-  "events",
-  "ui"
-];
+  let pollTimer: number | null = null;
 
-onMount(() => {
-  loadModules();
+  const ALL_PERMISSIONS: Permission[] = [
+    "filesystem",
+    "network",
+    "events",
+    "ui"
+  ];
 
-  pollTimer = window.setInterval(() => {
-    loadModules();
-  }, 2000);
+  async function loadModules() {
+    try {
+      const data: Array<{
+        id: string;
+        name: string;
+        installed: boolean;
+        loaded: boolean;
+        paired: boolean;
+      }> = await api("/modules");
 
-  return () => {
-    if (pollTimer) {
-      clearInterval(pollTimer);
-      pollTimer = null;
+      modules = data.map((m) => ({
+        id: m.id,
+        name: m.name,
+        installed: m.installed,
+        loaded: m.loaded,
+        paired: m.paired,
+
+        description: "Geen beschrijving beschikbaar",
+        enabled: m.loaded,
+        permissions: [],
+        lastLog: "Geen activiteit"
+      }));
+
+      if (selected) {
+        selected = modules.find(m => m.id === selected?.id) ?? null;
+      } else {
+        selected = modules[0] ?? null;
+      }
+
+      error = null;
+    } catch (e: any) {
+      error = e?.message ?? "Kernel niet bereikbaar";
+      modules = [];
+      selected = null;
     }
-  };
-});
+  }
+
+  async function pairSelected() {
+    if (!selected) return;
+    await api(`/modules/${selected.id}/pair`, { method: "POST" });
+    await loadModules();
+  }
+
+  async function unpairSelected() {
+    if (!selected) return;
+    await api(`/modules/${selected.id}/unpair`, { method: "POST" });
+    await loadModules();
+  }
 
   function togglePermission(p: Permission) {
     if (!selected) return;
@@ -101,13 +94,23 @@ onMount(() => {
       ? selected.permissions.filter((x) => x !== p)
       : [...selected.permissions, p];
 
-    // trigger reactivity
     modules = [...modules];
   }
 
-  function addModule() {
-    alert("Module toevoegen (pairing / marketplace – later)");
-  }
+  onMount(() => {
+    loadModules();
+
+    pollTimer = window.setInterval(() => {
+      loadModules();
+    }, 2000);
+
+    return () => {
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+    };
+  });
 </script>
 
 <section class="modules-page">
@@ -119,51 +122,26 @@ onMount(() => {
         <p class="error">Kernel niet bereikbaar: {error}</p>
       {/if}
     </div>
-
-    <button class="primary" on:click={addModule}>
-      + Module toevoegen
-    </button>
   </header>
 
   <div class="layout">
-    <!-- =========================
-      MODULE LIJST
-    ========================== -->
     <aside class="module-list">
-      {#if modules.length === 0}
-        <div class="empty">
-          <strong>Geen modules</strong>
-<small>Er zijn momenteel geen modules geïnstalleerd.</small>
-        </div>
-      {:else}
-        {#each modules as m}
-          <button
-            class="module-card {selected?.id === m.id ? 'active' : ''}"
-            on:click={() => (selected = m)}
-          >
-            <div class="top">
-              <strong>{m.name}</strong>
-              <span class="status {m.loaded ? 'on' : 'off'}">
-  {#if m.loaded}
-    Actief
-  {:else if m.installed}
-    Geïnstalleerd
-  {:else}
-    Onbekend
-  {/if}
-</span>
-
-            </div>
-
-            <small>{m.lastLog}</small>
-          </button>
-        {/each}
-      {/if}
+      {#each modules as m}
+        <button
+          class="module-card {selected?.id === m.id ? 'active' : ''}"
+          on:click={() => (selected = m)}
+        >
+          <div class="top">
+            <strong>{m.name}</strong>
+            <span class="status {m.paired ? 'on' : 'off'}">
+              {m.paired ? "Gepaird" : "Niet gepaird"}
+            </span>
+          </div>
+          <small>{m.lastLog}</small>
+        </button>
+      {/each}
     </aside>
 
-    <!-- =========================
-      MODULE DETAILS
-    ========================== -->
     <main class="details">
       {#if selected}
         <h2>{selected.name}</h2>
@@ -171,38 +149,32 @@ onMount(() => {
 
         <div class="section">
           <h3>Status</h3>
-          <button class="toggle" disabled title="Fase 2">
-{#if selected.loaded}
-  Actief
-{:else if selected.installed}
-  Geïnstalleerd (niet geladen)
-{:else}
-  Onbekend
-{/if}
-          </button>
+
+          {#if selected.paired}
+            <button class="danger" on:click={unpairSelected}>
+              Unpair module
+            </button>
+          {:else}
+            <button class="primary" on:click={pairSelected}>
+              Pair module
+            </button>
+          {/if}
         </div>
 
         <div class="section">
           <h3>Permissies</h3>
-
           <div class="permissions">
             {#each ALL_PERMISSIONS as p}
               <label>
                 <input
                   type="checkbox"
+                  disabled
                   checked={selected.permissions.includes(p)}
-                  on:change={() => togglePermission(p)}
-
                 />
                 <span>{p}</span>
               </label>
             {/each}
           </div>
-        </div>
-
-        <div class="section">
-          <h3>Laatste activiteit</h3>
-          <div class="log">{selected.lastLog}</div>
         </div>
       {:else}
         <p>Selecteer een module.</p>
@@ -212,148 +184,14 @@ onMount(() => {
 </section>
 
 <style>
-  .modules-page {
-    padding: 48px;
-    color: white;
-  }
-
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 32px;
-  }
-
-  h1 {
-    font-size: 28px;
-    margin: 0;
-  }
-
-  header p {
-    opacity: 0.7;
-    margin-top: 4px;
-  }
-
-  .error {
-    margin-top: 10px;
-    opacity: 0.9;
-    color: #ff9a9a;
-    font-size: 13px;
-  }
-
-  .primary {
-    background: linear-gradient(135deg, #5b7cff, #7a5cff);
-    border: none;
-    border-radius: 14px;
-    padding: 10px 16px;
-    color: white;
-    cursor: pointer;
-  }
-
-  .layout {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: 28px;
-  }
-
-  .module-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .empty {
-    background: rgba(20, 25, 40, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 14px;
-    padding: 14px;
-  }
-
-  .empty small {
-    display: block;
-    margin-top: 6px;
-    opacity: 0.7;
-  }
-
-  .module-card {
-    background: rgba(20, 25, 40, 0.85);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 14px;
-    padding: 14px;
-    text-align: left;
-    cursor: pointer;
-    transition: all 160ms ease;
-  }
-
-  .module-card.active {
-    border-color: rgba(120, 150, 255, 0.4);
-    box-shadow: 0 0 24px rgba(120, 150, 255, 0.18);
-  }
-
-  .module-card .top {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 6px;
-  }
-
-  .status {
-    font-size: 11px;
-    opacity: 0.8;
-  }
-
-  .status.on {
-    color: #7cffb2;
-  }
-
-  .status.off {
-    color: #ff9a9a;
-  }
-
-  .details {
-    background: rgba(15, 18, 30, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 20px;
-    padding: 28px;
-  }
-
-  .desc {
-    opacity: 0.75;
-    margin-bottom: 24px;
-  }
-
-  .section {
-    margin-bottom: 26px;
-  }
-
-  .toggle {
-    background: none;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 12px;
-    padding: 8px 14px;
-    color: white;
-    cursor: not-allowed;
-    opacity: 0.7;
-  }
-
-  .permissions {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-
-  label {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 14px;
-  }
-
-  .log {
-    background: rgba(0, 0, 0, 0.35);
-    border-radius: 12px;
-    padding: 12px;
-    font-family: monospace;
-    font-size: 13px;
-    opacity: 0.85;
-  }
+  .modules-page { padding: 48px; color: white; }
+  header { margin-bottom: 32px; }
+  .layout { display: grid; grid-template-columns: 320px 1fr; gap: 28px; }
+  .module-card { background: rgba(20,25,40,.85); border-radius: 14px; padding: 14px; }
+  .module-card.active { box-shadow: 0 0 24px rgba(120,150,255,.18); }
+  .status.on { color: #7cffb2; }
+  .status.off { color: #ff9a9a; }
+  .details { background: rgba(15,18,30,.9); border-radius: 20px; padding: 28px; }
+  .primary { background: #5b7cff; border: none; padding: 10px 16px; border-radius: 12px; }
+  .danger { background: #ff5b5b; border: none; padding: 10px 16px; border-radius: 12px; }
 </style>
