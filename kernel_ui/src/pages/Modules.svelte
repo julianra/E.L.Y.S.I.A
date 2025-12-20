@@ -4,6 +4,7 @@
   Modulebeheer pagina (UI-only, fase 1)
   - Leest modules van de Kernel via /modules
   - Laat admin manueel pairen / unpairen
+  - Laat admin ZIP-modules uploaden
 ========================================================= -->
 
 <script lang="ts">
@@ -19,7 +20,7 @@
     loaded: boolean;
     paired: boolean;
 
-    // UI-only placeholders
+    // UI-only placeholders (fase 1)
     description: string;
     enabled: boolean;
     permissions: Permission[];
@@ -30,6 +31,9 @@
   let selected: Module | null = null;
   let error: string | null = null;
   let pollTimer: number | null = null;
+
+  let uploading = false;
+  let uploadError: string | null = null;
 
   const ALL_PERMISSIONS: Permission[] = [
     "filesystem",
@@ -87,14 +91,32 @@
     await loadModules();
   }
 
-  function togglePermission(p: Permission) {
-    if (!selected) return;
+  async function uploadModule(file: File) {
+    uploading = true;
+    uploadError = null;
 
-    selected.permissions = selected.permissions.includes(p)
-      ? selected.permissions.filter((x) => x !== p)
-      : [...selected.permissions, p];
+    const form = new FormData();
+    form.append("file", file);
 
-    modules = [...modules];
+    try {
+      await api("/modules/upload", {
+        method: "POST",
+        body: form,
+      });
+
+      await loadModules();
+    } catch (e: any) {
+      uploadError = e?.message ?? "Upload mislukt";
+    } finally {
+      uploading = false;
+    }
+  }
+
+  function onFileSelected(e: Event) {
+    const input = e.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    uploadModule(input.files[0]);
+    input.value = "";
   }
 
   onMount(() => {
@@ -124,24 +146,58 @@
     </div>
   </header>
 
+  <!-- =========================
+       MODULE UPLOAD
+  ========================== -->
+  <div class="upload-box">
+    <label class="upload-btn">
+      Upload module (.zip)
+      <input
+        type="file"
+        accept=".zip"
+        on:change={onFileSelected}
+        disabled={uploading}
+        hidden
+      />
+    </label>
+
+    {#if uploading}
+      <p class="muted">Upload bezig…</p>
+    {/if}
+
+    {#if uploadError}
+      <p class="error">{uploadError}</p>
+    {/if}
+  </div>
+
   <div class="layout">
+    <!-- =========================
+         MODULE LIJST
+    ========================== -->
     <aside class="module-list">
-      {#each modules as m}
-        <button
-          class="module-card {selected?.id === m.id ? 'active' : ''}"
-          on:click={() => (selected = m)}
-        >
-          <div class="top">
-            <strong>{m.name}</strong>
-            <span class="status {m.paired ? 'on' : 'off'}">
-              {m.paired ? "Gepaird" : "Niet gepaird"}
-            </span>
-          </div>
-          <small>{m.lastLog}</small>
-        </button>
-      {/each}
+      {#if modules.length === 0}
+        <p class="muted">Geen modules gevonden.</p>
+      {:else}
+        {#each modules as m}
+          <button
+            class="module-card {selected?.id === m.id ? 'active' : ''}"
+            on:click={() => (selected = m)}
+          >
+            <div class="top">
+              <strong>{m.name}</strong>
+              <span class="status {m.paired ? 'on' : 'off'}">
+                {m.paired ? "Gepaird" : "Niet gepaird"}
+              </span>
+            </div>
+            <small>{m.lastLog}</small>
+          </button>
+        {/each}
+      {/if}
     </aside>
 
+    <!-- =========================
+         MODULE DETAILS
+    ========================== -->
     <main class="details">
       {#if selected}
         <h2>{selected.name}</h2>
@@ -184,14 +240,119 @@
 </section>
 
 <style>
-  .modules-page { padding: 48px; color: white; }
-  header { margin-bottom: 32px; }
-  .layout { display: grid; grid-template-columns: 320px 1fr; gap: 28px; }
-  .module-card { background: rgba(20,25,40,.85); border-radius: 14px; padding: 14px; }
-  .module-card.active { box-shadow: 0 0 24px rgba(120,150,255,.18); }
-  .status.on { color: #7cffb2; }
-  .status.off { color: #ff9a9a; }
-  .details { background: rgba(15,18,30,.9); border-radius: 20px; padding: 28px; }
-  .primary { background: #5b7cff; border: none; padding: 10px 16px; border-radius: 12px; }
-  .danger { background: #ff5b5b; border: none; padding: 10px 16px; border-radius: 12px; }
+  .modules-page {
+    padding: 48px;
+    color: white;
+  }
+
+  header {
+    margin-bottom: 32px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 28px;
+  }
+
+  .upload-box {
+    margin-bottom: 24px;
+  }
+
+  .upload-btn {
+    display: inline-block;
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: rgba(90,110,255,.9);
+    cursor: pointer;
+  }
+
+  .upload-btn:hover {
+    background: rgba(120,140,255,1);
+  }
+
+  .muted {
+    opacity: .6;
+    margin-top: 6px;
+  }
+
+  .error {
+    color: #ff8a8a;
+    margin-top: 6px;
+  }
+
+  .module-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .module-card {
+    background: rgba(20,25,40,.85);
+    border-radius: 14px;
+    padding: 14px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .module-card.active {
+    box-shadow: 0 0 24px rgba(120,150,255,.18);
+  }
+
+  .top {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .status.on {
+    color: #7cffb2;
+  }
+
+  .status.off {
+    color: #ff9a9a;
+  }
+
+  .details {
+    background: rgba(15,18,30,.9);
+    border-radius: 20px;
+    padding: 28px;
+  }
+
+  .desc {
+    opacity: .75;
+    margin-bottom: 24px;
+  }
+
+  .section {
+    margin-bottom: 26px;
+  }
+
+  .primary {
+    background: #5b7cff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 12px;
+    color: white;
+  }
+
+  .danger {
+    background: #ff5b5b;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 12px;
+    color: white;
+  }
+
+  .permissions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 </style>

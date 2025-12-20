@@ -17,6 +17,9 @@ mod auth;
 mod modules;
 mod status;
 mod ai;
+pub mod upload;
+pub mod install;
+
 
 use guard::http_access_guard;
 use auth::*;
@@ -72,4 +75,6 @@ pub fn build_router(state: Arc<KernelState>) -> Router {
             let s = state.clone();
             move |req, next| http_access_guard(s.clone(), req, next)
         }))
+        .route("/modules/upload", post(upload::upload_module))
+
 }
