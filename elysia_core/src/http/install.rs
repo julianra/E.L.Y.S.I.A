@@ -2,7 +2,7 @@
 // 📍 FILE: elysia_core/src/http/install.rs
 // 📝 ROLE:
 //   Installeert een reeds geüploade module-zip
-//   - Admin-only
+//   - Admin-only (via guard)
 //   - Extract naar plugins/
 //   - Geen execution
 // ======================================================================
@@ -15,11 +15,25 @@ use axum::{
 use std::{fs, path::PathBuf};
 use zip::ZipArchive;
 
+fn data_root() -> Result<PathBuf, StatusCode> {
+    let base = dirs::data_local_dir().ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+    Ok(base.join("Elysia"))
+}
+
+fn uploads_modules_dir() -> Result<PathBuf, StatusCode> {
+    Ok(data_root()?.join("uploads").join("modules"))
+}
+
 pub async fn install_module(
     Path(upload_id): Path<String>,
 ) -> impl IntoResponse {
-    let zip_path = PathBuf::from("elysia_data/uploads/modules")
-        .join(format!("{}.zip", upload_id));
+    let upload_id = upload_id.to_lowercase();
+
+    // Uploads staan in data_local/Elysia/uploads/modules/<id>.zip
+    let zip_path = match uploads_modules_dir() {
+        Ok(d) => d.join(format!("{}.zip", upload_id)),
+        Err(code) => return code,
+    };
 
     if !zip_path.exists() {
         return StatusCode::NOT_FOUND;
@@ -35,8 +49,11 @@ pub async fn install_module(
         Err(_) => return StatusCode::BAD_REQUEST,
     };
 
-    // plugin-id = zipnaam (of later uit manifest)
-    let plugin_id = upload_id.to_lowercase();
+    // plugin-id = upload_id (later uit manifest)
+    let plugin_id = upload_id;
+
+    // Voor Fase 1: plugins/ blijft zoals loader gebruikt (relatief)
+    // (We verplaatsen dit pas als jij beslist dat plugins ook onder data_local moet vallen)
     let dest = PathBuf::from("plugins").join(&plugin_id);
 
     if dest.exists() {
@@ -48,7 +65,10 @@ pub async fn install_module(
     }
 
     for i in 0..zip.len() {
-        let mut entry = zip.by_index(i).unwrap();
+        let mut entry = match zip.by_index(i) {
+            Ok(e) => e,
+            Err(_) => return StatusCode::BAD_REQUEST,
+        };
 
         let outpath = match entry.enclosed_name() {
             Some(p) => dest.join(p),
@@ -67,9 +87,17 @@ pub async fn install_module(
                 Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
             };
 
-            std::io::copy(&mut entry, &mut outfile).ok();
+            if std::io::copy(&mut entry, &mut outfile).is_err() {
+                return StatusCode::INTERNAL_SERVER_ERROR;
+            }
         }
     }
+
+    log::info!(
+        "[CORE][INSTALL] Installed module | upload_id={} dest={}",
+        plugin_id,
+        dest.to_string_lossy()
+    );
 
     StatusCode::CREATED
 }

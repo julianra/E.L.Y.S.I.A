@@ -1,9 +1,0 @@
-{
-  "id": "ai",
-  "name": "AI Service Adapter",
-  "version": "0.1.0",
-  "type": "system",
-  "capabilities": [
-    "ai.execute"
-  ]
-}

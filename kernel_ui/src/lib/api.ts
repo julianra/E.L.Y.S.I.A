@@ -33,9 +33,13 @@ export async function api(
         : null;
 
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-    };
+  ...(options.headers || {}),
+};
+
+// Alleen JSON content-type zetten als body geen FormData is
+if (!(options.body instanceof FormData)) {
+  headers['Content-Type'] = 'application/json';
+}
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;

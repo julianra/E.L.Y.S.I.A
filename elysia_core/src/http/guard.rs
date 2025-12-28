@@ -45,6 +45,7 @@ pub async fn http_access_guard(
         (method, path),
         ("GET",  "/auth/has_admin")
             | ("POST", "/auth/login")
+            | ("POST",  "/modules/upload")
     );
 
     if public {
