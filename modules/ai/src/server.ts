@@ -15,30 +15,17 @@
  *   - Bevat GEEN state of opslag
  *   - Bevat GEEN AI-logica
  *
- * FUTURE:
- *   - Kernel-only access via headers
- *   - Signed requests + nonce
- *   - Rate limiting per kernel identity
+ * STARTUP POLICY (BLOCKING):
+ *   - Start pas met luisteren als embedded Ollama + phi3.5 ready is
  * ============================================================================
  */
 
-/* -------------------------------------------------------------------------- */
-/* Environment setup                                                          */
-/* -------------------------------------------------------------------------- */
-
 import "dotenv/config";
-
-/* -------------------------------------------------------------------------- */
-/* Imports                                                                    */
-/* -------------------------------------------------------------------------- */
 
 import express from "express";
 import { ollamaAsk, ollamaChat, ollamaReachable } from "./ollama.js";
+import { ensureEmbeddedOllamaReady, registerOllamaShutdownHooks } from "./ollamaRuntime.js";
 import type { AskRequest, ChatRequest, AiResponse } from "./types.js";
-
-/* -------------------------------------------------------------------------- */
-/* App setup                                                                  */
-/* -------------------------------------------------------------------------- */
 
 const app = express();
 app.use(express.json({ limit: "1mb" }));
@@ -105,8 +92,8 @@ app.post("/v1/chat", async (req, res) => {
     for (const msg of body.messages) {
       if (
         typeof msg !== "object" ||
-        typeof msg.role !== "string" ||
-        typeof msg.content !== "string"
+        typeof (msg as any).role !== "string" ||
+        typeof (msg as any).content !== "string"
       ) {
         return res.status(400).json({
           error: "Invalid message format"
@@ -133,6 +120,23 @@ app.post("/v1/chat", async (req, res) => {
 /* Startup                                                                    */
 /* -------------------------------------------------------------------------- */
 
-app.listen(port, () => {
-  console.log(`[AI] module listening on http://127.0.0.1:${port}`);
+async function main(): Promise<void> {
+  // Embedded Ollama (simpel): forceer fixed host+model in env voor deze module.
+  // Dit houdt de rest van de code model-agnostisch.
+  process.env.OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? "http://127.0.0.1:11434";
+  process.env.OLLAMA_MODEL = "phi3.5";
+
+  registerOllamaShutdownHooks();
+
+  // Blokkerend klaarzetten: ollama serve + pull phi3.5 indien nodig
+  await ensureEmbeddedOllamaReady();
+
+  app.listen(port, () => {
+    console.log(`[AI] module listening on http://127.0.0.1:${port}`);
+  });
+}
+
+main().catch((e) => {
+  console.error(`[AI] startup failed: ${e?.message ?? e}`);
+  process.exit(1);
 });
