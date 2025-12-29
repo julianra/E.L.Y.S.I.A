@@ -1,0 +1,8 @@
+{
+  "id": "ai",
+  "name": "AI Module",
+  "version": "0.1.0",
+  "entry": "dist/server.js",
+  "runtime": "node",
+  "description": "Local AI backend for ELYSIA (phi3.5)"
+}

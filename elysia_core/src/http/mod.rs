@@ -1,12 +1,18 @@
 // ======================================================================
 // 📍 FILE: elysia_core/src/http/mod.rs
 // 📝 Central HTTP router for ELYSIA Core
+//
+// BELANGRIJK:
+// - Geen CORS (Electron / native UI)
+// - Body size limit UITGESCHAKELD (vereist voor module ZIP uploads)
+// - Guard blijft actief
 // ======================================================================
 
 use axum::{
     routing::{get, post},
     Router,
     middleware,
+    extract::DefaultBodyLimit,
 };
 use std::sync::Arc;
 
@@ -27,9 +33,17 @@ use status::*;
 use ai::*;
 
 pub fn build_router(state: Arc<KernelState>) -> Router {
-    let app = Router::new()
+    Router::new()
 
+        // ==================================================
+        // ⚠️ CRUCIAAL: BODY SIZE LIMIT UIT
+        // Nodig voor grote multipart uploads (ZIP modules)
+        // ==================================================
+        .layer(DefaultBodyLimit::disable())
+
+        // ==================================================
         // AUTH
+        // ==================================================
         .route("/auth/has_admin", get({
             let s = state.clone();
             move || has_admin(s.clone())
@@ -43,19 +57,25 @@ pub fn build_router(state: Arc<KernelState>) -> Router {
             move |payload| login(s.clone(), payload)
         }))
 
+        // ==================================================
         // STATUS
+        // ==================================================
         .route("/status", get({
             let s = state.clone();
             move || status(s.clone())
         }))
 
+        // ==================================================
         // AI
+        // ==================================================
         .route("/ai/execute", post({
             let s = state.clone();
             move |payload| ai_execute(s.clone(), payload)
         }))
 
+        // ==================================================
         // MODULES
+        // ==================================================
         .route("/modules", get({
             let s = state.clone();
             move || list_modules(s.clone())
@@ -68,12 +88,18 @@ pub fn build_router(state: Arc<KernelState>) -> Router {
             let s = state.clone();
             move |path| unpair_module(s.clone(), path)
         }))
-        .route("/modules/upload", post(upload::upload_module))
-        .route("/modules/install/:upload_id", post(install::install_module));
 
-    // ⬅️ GUARD OP HET GEHEEL
-    app.layer(middleware::from_fn({
-        let s = state.clone();
-        move |req, next| http_access_guard(s.clone(), req, next)
-    }))
+        // Upload ZIP (grote bestanden)
+        .route("/modules/upload", post(upload::upload_module))
+
+        // Install uit uploads/
+        .route("/modules/install/:upload_id", post(install::install_module))
+
+        // ==================================================
+        // 🔒 GUARD (ADMIN AUTH)
+        // ==================================================
+        .layer(middleware::from_fn({
+            let s = state.clone();
+            move |req, next| http_access_guard(s.clone(), req, next)
+        }))
 }
