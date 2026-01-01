@@ -8,8 +8,8 @@
 // ======================================================================
 
 use elysia_core::Kernel;
-use tokio::runtime::Runtime;
 use log::info;
+use tokio::runtime::Runtime;
 
 fn main() {
     env_logger::init();

@@ -12,10 +12,10 @@
 //     - Volledige reload (geen partial unload)
 // ======================================================================
 
+use log::info;
 use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use log::info;
 
 use crate::module::registry::ModuleRegistry;
 use crate::plugins::loader::PluginLoader;

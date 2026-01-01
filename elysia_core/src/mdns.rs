@@ -20,9 +20,9 @@
 //
 // ======================================================================
 
+use crate::kernel::KernelState;
 use mdns_sd::{ServiceDaemon, ServiceInfo};
 use serde_json::json;
-use crate::kernel::KernelState;
 
 pub fn start_mdns(port: u16, _state: &KernelState) -> anyhow::Result<ServiceDaemon> {
     let mdns = ServiceDaemon::new()?;
@@ -30,8 +30,7 @@ pub fn start_mdns(port: u16, _state: &KernelState) -> anyhow::Result<ServiceDaem
     // -------------------------------------
     // Lokale IP bepalen
     // -------------------------------------
-    let local_ip = local_ip_address::local_ip()?
-        .to_string();
+    let local_ip = local_ip_address::local_ip()?.to_string();
 
     // -------------------------------------
     // Unieke node ID genereren / laden
@@ -80,11 +79,7 @@ pub fn start_mdns(port: u16, _state: &KernelState) -> anyhow::Result<ServiceDaem
 
     mdns.register(service)?;
 
-    log::info!(
-        "[mDNS] Broadcasting ELYSIA Core → {}:{}",
-        local_ip,
-        port
-    );
+    log::info!("[mDNS] Broadcasting ELYSIA Core → {}:{}", local_ip, port);
 
     Ok(mdns)
 }
@@ -93,17 +88,14 @@ pub fn start_mdns(port: u16, _state: &KernelState) -> anyhow::Result<ServiceDaem
 // Unieke node ID persistent opslaan (1x per installatie)
 // -----------------------------------------------------------
 fn ensure_node_id() -> String {
-    let base = dirs::data_local_dir()
-        .unwrap()
-        .join("elysia");
+    let base = dirs::data_local_dir().unwrap().join("elysia");
 
     std::fs::create_dir_all(&base).ok();
 
     let file = base.join("node_id");
 
     if file.exists() {
-        return std::fs::read_to_string(&file)
-            .unwrap_or_else(|_| "unknown".into());
+        return std::fs::read_to_string(&file).unwrap_or_else(|_| "unknown".into());
     }
 
     // New ID

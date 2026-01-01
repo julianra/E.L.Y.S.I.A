@@ -8,12 +8,8 @@ use std::sync::Arc;
 
 use crate::KernelState;
 use crate::security::{
-    hash_password,
+    create_user_token, get_user_password_hash, hash_password, insert_user, user_exists,
     verify_password,
-    get_user_password_hash,
-    user_exists,
-    insert_user,
-    create_user_token,
 };
 
 #[derive(Serialize)]
@@ -77,10 +73,7 @@ pub struct LoginResponse {
     pub error: Option<String>,
 }
 
-pub async fn login(
-    state: Arc<KernelState>,
-    Json(req): Json<LoginRequest>,
-) -> Json<LoginResponse> {
+pub async fn login(state: Arc<KernelState>, Json(req): Json<LoginRequest>) -> Json<LoginResponse> {
     let Some(stored) = get_user_password_hash(&state, &req.username) else {
         return Json(LoginResponse {
             success: false,

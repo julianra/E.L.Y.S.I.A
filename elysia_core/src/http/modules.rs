@@ -2,11 +2,11 @@
 // 📍 FILE: elysia_core/src/http/modules.rs
 // ======================================================================
 
-use axum::response::IntoResponse;
 use axum::Json;
 use axum::http::StatusCode;
-use std::sync::Arc;
+use axum::response::IntoResponse;
 use serde::Serialize;
+use std::sync::Arc;
 
 use crate::KernelState;
 use crate::plugins::loader::PluginLoader;
@@ -28,22 +28,29 @@ pub async fn list_modules(state: Arc<KernelState>) -> Json<Vec<ModuleInfo>> {
     let registry = state.modules.read().await;
     let conn = state.ctx.db();
 
-    let modules = found.into_iter().map(|pl| {
-        let name = pl.manifest.name.clone();
-        let id = name.to_lowercase();
+    let modules = found
+        .into_iter()
+        .map(|pl| {
+            let name = pl.manifest.name.clone();
+            let id = name.to_lowercase();
 
-        let loaded = registry.iter().any(|m| m.name().to_lowercase() == id);
-        let paired = get_module_state(&conn, &id).ok().flatten().map(|m| m.paired).unwrap_or(false);
+            let loaded = registry.iter().any(|m| m.name().to_lowercase() == id);
+            let paired = get_module_state(&conn, &id)
+                .ok()
+                .flatten()
+                .map(|m| m.paired)
+                .unwrap_or(false);
 
-        ModuleInfo {
-            id,
-            name,
-            kind: "module".into(),
-            installed: true,
-            loaded,
-            paired,
-        }
-    }).collect();
+            ModuleInfo {
+                id,
+                name,
+                kind: "module".into(),
+                installed: true,
+                loaded,
+                paired,
+            }
+        })
+        .collect();
 
     Json(modules)
 }

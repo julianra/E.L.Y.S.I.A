@@ -2,9 +2,9 @@
 // 📍 FILE: elysia_core/src/kernel_api/status.rs
 // ======================================================================
 
+use crate::kernel::KernelState;
 use serde::Serialize;
 use std::sync::Arc;
-use crate::kernel::KernelState;
 
 #[derive(Serialize)]
 pub struct KernelStatus {

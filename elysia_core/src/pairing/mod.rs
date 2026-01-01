@@ -9,15 +9,15 @@
 //     - Datatypes voor HTTP-laag
 // ======================================================================
 
-use rand::rngs::OsRng;
 use rand::RngCore;
+use rand::rngs::OsRng;
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
 
 use crate::kernel::KernelState;
 
 use hmac::{Hmac, Mac};
-use sha2::{Sha256, Digest};
+use sha2::{Digest, Sha256};
 
 type HmacSha = Hmac<Sha256>;
 
@@ -51,11 +51,21 @@ pub struct PairCompleteResponse {
 
 impl PairCompleteResponse {
     pub fn success(id: String, token: String) -> Self {
-        Self { success: true, device_id: Some(id), device_token: Some(token), error: None }
+        Self {
+            success: true,
+            device_id: Some(id),
+            device_token: Some(token),
+            error: None,
+        }
     }
 
     pub fn error(msg: &str) -> Self {
-        Self { success: false, device_id: None, device_token: None, error: Some(msg.into()) }
+        Self {
+            success: false,
+            device_id: None,
+            device_token: None,
+            error: Some(msg.into()),
+        }
     }
 }
 
@@ -85,8 +95,7 @@ pub fn hash_secret(secret: &str) -> String {
 // ------------------------------------------------------------
 
 pub fn create_device_token(device_id: &str) -> String {
-    let mut mac = HmacSha::new_from_slice(b"ELYSIA_DEVICE_SECRET")
-        .expect("HMAC init failed");
+    let mut mac = HmacSha::new_from_slice(b"ELYSIA_DEVICE_SECRET").expect("HMAC init failed");
 
     mac.update(device_id.as_bytes());
     let sig = mac.finalize().into_bytes();
@@ -96,14 +105,17 @@ pub fn create_device_token(device_id: &str) -> String {
 
 pub fn validate_device_token(token: &str, state: &KernelState) -> Option<String> {
     let parts: Vec<&str> = token.split('.').collect();
-    if parts.len() != 3 { return None; }
-    if parts[0] != "dev" { return None; }
+    if parts.len() != 3 {
+        return None;
+    }
+    if parts[0] != "dev" {
+        return None;
+    }
 
     let device_id = parts[1];
     let sig_hex = parts[2];
 
-    let mut mac = HmacSha::new_from_slice(b"ELYSIA_DEVICE_SECRET")
-        .expect("HMAC init failed");
+    let mut mac = HmacSha::new_from_slice(b"ELYSIA_DEVICE_SECRET").expect("HMAC init failed");
 
     mac.update(device_id.as_bytes());
     let expected = mac.finalize().into_bytes();
@@ -113,11 +125,13 @@ pub fn validate_device_token(token: &str, state: &KernelState) -> Option<String>
     }
 
     let conn = state.ctx.db();
-    let exists: bool = conn.query_row(
-        "SELECT EXISTS(SELECT 1 FROM devices WHERE id = ?)",
-        params![device_id],
-        |r| r.get(0),
-    ).unwrap_or(false);
+    let exists: bool = conn
+        .query_row(
+            "SELECT EXISTS(SELECT 1 FROM devices WHERE id = ?)",
+            params![device_id],
+            |r| r.get(0),
+        )
+        .unwrap_or(false);
 
     exists.then(|| device_id.to_string())
 }

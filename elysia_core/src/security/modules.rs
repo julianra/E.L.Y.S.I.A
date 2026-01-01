@@ -10,8 +10,8 @@
 //   ❗ Geen flows
 // ======================================================================
 
-use rusqlite::{params, Connection};
 use anyhow::Result;
+use rusqlite::{Connection, params};
 
 #[derive(Debug, Clone)]
 pub struct ModuleState {
@@ -22,9 +22,8 @@ pub struct ModuleState {
 }
 
 pub fn get_module_state(conn: &Connection, id: &str) -> Result<Option<ModuleState>> {
-    let mut stmt = conn.prepare(
-        "SELECT id, paired, permissions_json, paired_at FROM modules WHERE id = ?"
-    )?;
+    let mut stmt =
+        conn.prepare("SELECT id, paired, permissions_json, paired_at FROM modules WHERE id = ?")?;
 
     let mut rows = stmt.query(params![id])?;
 
@@ -41,10 +40,7 @@ pub fn get_module_state(conn: &Connection, id: &str) -> Result<Option<ModuleStat
 }
 
 pub fn ensure_module_row(conn: &Connection, id: &str) -> Result<()> {
-    conn.execute(
-        "INSERT OR IGNORE INTO modules (id) VALUES (?)",
-        params![id],
-    )?;
+    conn.execute("INSERT OR IGNORE INTO modules (id) VALUES (?)", params![id])?;
     Ok(())
 }
 

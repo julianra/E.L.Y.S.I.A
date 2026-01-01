@@ -4,8 +4,8 @@
 // ======================================================================
 
 use crate::kernel::KernelState;
-use rusqlite::params;
 use anyhow::Result;
+use rusqlite::params;
 
 /// Check if a user exists.
 pub fn user_exists(state: &KernelState, username: &str) -> bool {

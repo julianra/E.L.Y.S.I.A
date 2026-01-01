@@ -2,11 +2,11 @@
 // 📍 FILE: elysia_core/src/plugins/loader.rs
 // ======================================================================
 
-use std::{fs, path::PathBuf};
 use libloading::{Library, Symbol};
+use std::{fs, path::PathBuf};
 
-use crate::module::registry::ModuleRegistry;
 use super::manifest::PluginManifest;
+use crate::module::registry::ModuleRegistry;
 
 #[derive(Debug, Clone)]
 pub struct PluginInfo {
@@ -68,10 +68,7 @@ impl PluginLoader {
             let manifest: PluginManifest = match toml::from_str(&text) {
                 Ok(m) => m,
                 Err(e) => {
-                    println!(
-                        "[PLUGIN] Fout in manifest {:?}: {}",
-                        manifest_path, e
-                    );
+                    println!("[PLUGIN] Fout in manifest {:?}: {}", manifest_path, e);
                     continue;
                 }
             };
@@ -152,9 +149,7 @@ impl PluginLoader {
             // 3️⃣ Resolve entrypoint
             type InitFn = extern "C" fn(&mut ModuleRegistry);
 
-            let func: Symbol<InitFn> = match unsafe {
-                stored_lib.get(b"elysia_register")
-            } {
+            let func: Symbol<InitFn> = match unsafe { stored_lib.get(b"elysia_register") } {
                 Ok(f) => f,
                 Err(e) => {
                     println!(
@@ -170,10 +165,7 @@ impl PluginLoader {
 
             pl.loaded = true;
 
-            println!(
-                "[PLUGIN] {} succesvol geladen",
-                pl.manifest.name
-            );
+            println!("[PLUGIN] {} succesvol geladen", pl.manifest.name);
         }
 
         Ok(())

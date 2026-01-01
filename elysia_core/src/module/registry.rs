@@ -3,9 +3,9 @@
 // ======================================================================
 
 use super::ElysiaModule;
+use libloading::Library;
 use std::collections::HashMap;
 use std::sync::Arc;
-use libloading::Library;
 
 pub struct ModuleRegistry {
     modules: HashMap<String, Arc<dyn ElysiaModule>>,
@@ -21,10 +21,9 @@ impl ModuleRegistry {
     }
 
     pub fn store_lib(&mut self, lib: Library) -> &Library {
-    self.libs.push(lib);
-    self.libs.last().unwrap()
-}
-
+        self.libs.push(lib);
+        self.libs.last().unwrap()
+    }
 
     pub fn register_module(&mut self, module: Box<dyn ElysiaModule>) {
         let name = module.name().to_string();

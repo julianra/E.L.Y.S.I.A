@@ -4,12 +4,12 @@
 //     Provides pure data-access for Portal, Orbit, and modules via IPC.
 // ======================================================================
 
-pub mod status;
 pub mod health;
 pub mod meta;
 pub mod nodes;
+pub mod status;
 
-pub use status::*;
 pub use health::*;
 pub use meta::*;
 pub use nodes::*;
+pub use status::*;

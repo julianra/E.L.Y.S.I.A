@@ -7,11 +7,7 @@
 //   - Geen execution
 // ======================================================================
 
-use axum::{
-    extract::Path,
-    http::StatusCode,
-    response::IntoResponse,
-};
+use axum::{extract::Path, http::StatusCode, response::IntoResponse};
 use std::{fs, path::PathBuf};
 use zip::ZipArchive;
 
@@ -24,9 +20,7 @@ fn uploads_modules_dir() -> Result<PathBuf, StatusCode> {
     Ok(data_root()?.join("uploads").join("modules"))
 }
 
-pub async fn install_module(
-    Path(upload_id): Path<String>,
-) -> impl IntoResponse {
+pub async fn install_module(Path(upload_id): Path<String>) -> impl IntoResponse {
     let upload_id = upload_id.to_lowercase();
 
     // Uploads staan in data_local/Elysia/uploads/modules/<id>.zip

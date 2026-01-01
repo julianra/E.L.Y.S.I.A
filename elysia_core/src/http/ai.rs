@@ -108,19 +108,12 @@ pub async fn ai_execute(
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
 
-    let reply = json
-        .get("reply")
-        .and_then(|v| v.as_str());
+    let reply = json.get("reply").and_then(|v| v.as_str());
 
-    let error = json
-        .get("error")
-        .and_then(|v| v.as_str());
+    let error = json.get("error").and_then(|v| v.as_str());
 
     if !success {
-        log::error!(
-            "[CORE][AI] AI reported failure: {:?}",
-            error
-        );
+        log::error!("[CORE][AI] AI reported failure: {:?}", error);
 
         return Json(AiExecuteResponse {
             reply: None,
@@ -131,9 +124,7 @@ pub async fn ai_execute(
     let reply = match reply {
         Some(r) => r.to_string(),
         None => {
-            log::error!(
-                "[CORE][AI] Contract violation: success=true but reply missing"
-            );
+            log::error!("[CORE][AI] Contract violation: success=true but reply missing");
             return Json(AiExecuteResponse {
                 reply: None,
                 error: Some("Invalid AI response contract".into()),

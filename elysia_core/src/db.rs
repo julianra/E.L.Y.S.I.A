@@ -12,16 +12,13 @@
 
 use rusqlite::Connection;
 use std::fs;
-use std::path::{Path};
+use std::path::Path;
 
 /// Voer ALLE migrations uit: eerst core, dan module-specifiek.
 pub fn run_migrations(conn: &Connection) -> anyhow::Result<()> {
     let mut migrations = vec![];
 
-    let core_migrations = format!(
-        "{}/migrations",
-        env!("CARGO_MANIFEST_DIR")
-    );
+    let core_migrations = format!("{}/migrations", env!("CARGO_MANIFEST_DIR"));
 
     collect_sql_files(&core_migrations, &mut migrations);
     collect_module_migrations("modules", &mut migrations);

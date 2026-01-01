@@ -3,10 +3,10 @@
 // ======================================================================
 
 use axum::{
+    body::Body,
     http::{Request, StatusCode},
     middleware::Next,
-    response::{Response, IntoResponse},
-    body::Body,
+    response::{IntoResponse, Response},
 };
 use std::sync::Arc;
 
@@ -27,10 +27,10 @@ pub async fn http_access_guard(
     if !admin_exists {
         let allowed = matches!(
             (method, path),
-            ("GET",  "/auth/has_admin")
+            ("GET", "/auth/has_admin")
                 | ("POST", "/auth/create_admin")
                 | ("POST", "/auth/login")
-                | ("GET",  "/status")
+                | ("GET", "/status")
         );
 
         if !allowed {
@@ -43,9 +43,7 @@ pub async fn http_access_guard(
     // ---------------- ADMIN MODE ----------------
     let public = matches!(
         (method, path),
-        ("GET",  "/auth/has_admin")
-            | ("POST", "/auth/login")
-            | ("POST",  "/modules/upload")
+        ("GET", "/auth/has_admin") | ("POST", "/auth/login") | ("POST", "/modules/upload")
     );
 
     if public {

@@ -2,10 +2,10 @@
 // 📍 FILE: elysia_core/src/events.rs
 // ======================================================================
 
-use serde_json::Value;
-use tokio::task;
 use crate::kernel::KernelState;
 use crate::security::get_module_state;
+use serde_json::Value;
+use tokio::task;
 
 #[derive(Clone, Debug)]
 pub struct KernelEvent {

@@ -4,7 +4,7 @@
 //     Kernel never exposes this via HTTP.
 // ======================================================================
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NodeInfo {

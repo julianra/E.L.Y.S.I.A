@@ -3,10 +3,10 @@
 // 📝 Authentication module: tokens, users, subjects.
 // ======================================================================
 
+pub mod subject;
 pub mod tokens;
 pub mod users;
-pub mod subject;
 
+pub use subject::*;
 pub use tokens::*;
 pub use users::*;
-pub use subject::*;

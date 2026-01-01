@@ -12,18 +12,13 @@
 use std::sync::Arc;
 
 use log::info;
-use tokio::task;
 use tokio::sync::RwLock;
+use tokio::task;
 
 use crate::{
-    context::KernelContext,
-    db_init::init_database,
-    db,
-    events::EventBus,
-    module::registry::ModuleRegistry,
+    context::KernelContext, db, db_init::init_database, events::EventBus,
+    kernel_api::get_kernel_status, mdns::start_mdns, module::registry::ModuleRegistry,
     plugins::reloader::reload_plugins,
-    kernel_api::get_kernel_status,
-    mdns::start_mdns,
 };
 
 // ======================================================================
@@ -101,8 +96,7 @@ impl Kernel {
         // KERNEL READY LOG
         // --------------------------------------------------
         let status = get_kernel_status(&state).await;
-info!("[CORE] Kernel online with {} modules", status.modules);
-
+        info!("[CORE] Kernel online with {} modules", status.modules);
 
         // --------------------------------------------------
         // LOCAL HTTP ADMIN API
@@ -111,10 +105,10 @@ info!("[CORE] Kernel online with {} modules", status.modules);
             let state_http = state.clone();
 
             task::spawn(async move {
-                use axum::serve;
-                use tokio::net::TcpListener;
-                use std::net::SocketAddr;
                 use crate::http::build_router;
+                use axum::serve;
+                use std::net::SocketAddr;
+                use tokio::net::TcpListener;
 
                 let addr = SocketAddr::from(([127, 0, 0, 1], 2022));
                 let app = build_router(state_http.clone());
@@ -125,9 +119,7 @@ info!("[CORE] Kernel online with {} modules", status.modules);
 
                 info!("[CORE] Local admin API on http://127.0.0.1:2022");
 
-                serve(listener, app)
-                    .await
-                    .expect("Admin API crashed");
+                serve(listener, app).await.expect("Admin API crashed");
             });
         }
 

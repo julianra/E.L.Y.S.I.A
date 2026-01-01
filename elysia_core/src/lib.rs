@@ -22,6 +22,5 @@ pub mod kernel_api;
 
 pub mod security;
 
-pub mod plugins;
 pub mod http;
-
+pub mod plugins;

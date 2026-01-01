@@ -13,8 +13,7 @@ const TOKEN_SECRET: &[u8] = b"ELYISA_SUPER_SECRET_CHANGE_THIS";
 /// Create a signed user token.
 /// Format: username.signature_hex
 pub fn create_user_token(username: &str) -> String {
-    let mut mac = HmacSha256::new_from_slice(TOKEN_SECRET)
-        .expect("HMAC init failed");
+    let mut mac = HmacSha256::new_from_slice(TOKEN_SECRET).expect("HMAC init failed");
 
     mac.update(username.as_bytes());
     let signature = mac.finalize().into_bytes();
@@ -33,8 +32,7 @@ pub fn validate_user_token(token: &str) -> Option<String> {
     let username = parts[0];
     let sig_hex = parts[1];
 
-    let mut mac = HmacSha256::new_from_slice(TOKEN_SECRET)
-        .expect("HMAC init failed");
+    let mut mac = HmacSha256::new_from_slice(TOKEN_SECRET).expect("HMAC init failed");
 
     mac.update(username.as_bytes());
     let expected = mac.finalize().into_bytes();

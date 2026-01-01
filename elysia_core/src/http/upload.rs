@@ -16,19 +16,14 @@ use axum::{
     http::{Request, StatusCode},
     response::IntoResponse,
 };
-use tokio::{
-    fs,
-    io::AsyncWriteExt,
-};
-use uuid::Uuid;
 use std::path::PathBuf;
+use tokio::{fs, io::AsyncWriteExt};
+use uuid::Uuid;
 
 // CRUCIAAL: Hyper 1 streaming trait
 use http_body_util::BodyExt;
 
-pub async fn upload_module(
-    mut req: Request<Body>,
-) -> impl IntoResponse {
+pub async fn upload_module(mut req: Request<Body>) -> impl IntoResponse {
     // --------------------------------------------------
     // Filename uit header
     // --------------------------------------------------

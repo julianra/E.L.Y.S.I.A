@@ -6,10 +6,10 @@
 //   - modules (pairing + permissions state)
 // ======================================================================
 
-pub mod hashing;
 pub mod auth;
+pub mod hashing;
 pub mod modules;
 
-pub use hashing::*;
 pub use auth::*;
+pub use hashing::*;
 pub use modules::*;
