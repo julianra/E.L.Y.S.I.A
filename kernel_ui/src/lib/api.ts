@@ -2,50 +2,38 @@
 // 📍 FILE: src/lib/api.ts
 // 📝 ROLE:
 //   Centrale API-helper voor communicatie met de ELYSIA Kernel.
-//   - Automatische JSON parsing
-//   - Token injectie
-//   - Error-safe responses
+//   - Electron-only
+//   - Geen proxy
+//   - Directe fetch naar kernel
+//   - Respecteert raw uploads (ZIP streaming)
 // ======================================================================
 
-const BASE_URL =
-  window.location.protocol === "file:"
-    ? "http://127.0.0.1:2022"
-    : import.meta.env.DEV
-      ? "/api"
-      : "http://127.0.0.1:2022";
-
+const KERNEL_BASE = "http://127.0.0.1:2022";
 
 export async function api(
   path: string,
-  
   options: RequestInit = {}
 ): Promise<any> {
-  console.log("API CALL", {
-  base: BASE_URL,
-  path,
-  full: `${BASE_URL}${path}`
-});
+  const token =
+    typeof localStorage !== "undefined"
+      ? localStorage.getItem("elysia_admin_token")
+      : null;
+
+  const headers: HeadersInit = {
+    ...(options.headers || {}),
+  };
+
+  // ❗ Alleen JSON header zetten als body leeg is
+  if (!options.body && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
   try {
-    const token =
-      typeof localStorage !== 'undefined'
-        ? localStorage.getItem('elysia_admin_token')
-        : null;
-
-    const headers: HeadersInit = {
-  ...(options.headers || {}),
-};
-
-// Alleen JSON content-type zetten als body geen FormData is
-if (!(options.body instanceof FormData)) {
-  headers['Content-Type'] = 'application/json';
-}
-
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const res = await fetch(`${BASE_URL}${path}`, {
+    const res = await fetch(`${KERNEL_BASE}${path}`, {
       ...options,
       headers,
     });
@@ -55,16 +43,12 @@ if (!(options.body instanceof FormData)) {
     try {
       return JSON.parse(text);
     } catch {
-      return {
-        success: false,
-        error: 'Invalid JSON response from kernel',
-      };
+      return text;
     }
-  } catch (err) {
+  } catch {
     return {
       success: false,
-      error: 'Kernel unreachable',
+      error: "Kernel unreachable",
     };
   }
-  
 }

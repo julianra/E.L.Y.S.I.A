@@ -39,7 +39,7 @@
     "filesystem",
     "network",
     "events",
-    "ui"
+    "ui",
   ];
 
   async function loadModules() {
@@ -62,11 +62,11 @@
         description: "Geen beschrijving beschikbaar",
         enabled: m.loaded,
         permissions: [],
-        lastLog: "Geen activiteit"
+        lastLog: "Geen activiteit",
       }));
 
       if (selected) {
-        selected = modules.find(m => m.id === selected?.id) ?? null;
+        selected = modules.find((m) => m.id === selected?.id) ?? null;
       } else {
         selected = modules[0] ?? null;
       }
@@ -92,25 +92,33 @@
   }
 
   async function uploadModule(file: File) {
-    uploading = true;
-    uploadError = null;
+  uploading = true;
+  uploadError = null;
 
-    const form = new FormData();
-    form.append("file", file);
+  try {
+    const res = await fetch("http://127.0.0.1:2022/modules/upload", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/octet-stream",
+        "X-Filename": file.name,
+        ...(localStorage.getItem("elysia_admin_token")
+          ? { Authorization: `Bearer ${localStorage.getItem("elysia_admin_token")}` }
+          : {}),
+      },
+      body: file, // 🔥 raw stream
+    });
 
-    try {
-      await api("/modules/upload", {
-        method: "POST",
-        body: form,
-      });
-
-      await loadModules();
-    } catch (e: any) {
-      uploadError = e?.message ?? "Upload mislukt";
-    } finally {
-      uploading = false;
+    if (!res.ok) {
+      throw new Error(`Upload failed (${res.status})`);
     }
+
+    await loadModules();
+  } catch (e: any) {
+    uploadError = e?.message ?? "Upload mislukt";
+  } finally {
+    uploading = false;
   }
+}
 
   function onFileSelected(e: Event) {
     const input = e.target as HTMLInputElement;
@@ -171,9 +179,6 @@
   </div>
 
   <div class="layout">
-    <!-- =========================
-         MODULE LIJST
-    ========================== -->
     <aside class="module-list">
       {#if modules.length === 0}
         <p class="muted">Geen modules gevonden.</p>
@@ -195,9 +200,6 @@
       {/if}
     </aside>
 
-    <!-- =========================
-         MODULE DETAILS
-    ========================== -->
     <main class="details">
       {#if selected}
         <h2>{selected.name}</h2>
@@ -222,11 +224,7 @@
           <div class="permissions">
             {#each ALL_PERMISSIONS as p}
               <label>
-                <input
-                  type="checkbox"
-                  disabled
-                  checked={selected.permissions.includes(p)}
-                />
+                <input type="checkbox" disabled />
                 <span>{p}</span>
               </label>
             {/each}

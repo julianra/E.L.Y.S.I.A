@@ -87,6 +87,7 @@ function startKernel() {
   const kernelPath = getKernelPath()
   const cwd = getKernelWorkDir()
   const logPath = getKernelLogPath()
+
   // --------------------------------------------------
   // Copy bundled plugins → runtime kernel directory
   // --------------------------------------------------
@@ -203,7 +204,12 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+
+      // --------------------------------------------------
+      // DEV ONLY: disable web security (CORS)
+      // --------------------------------------------------
+      webSecurity: !isDev
     }
   })
 
@@ -224,10 +230,23 @@ function createWindow() {
 // App lifecycle
 // ----------------------------------------------------------------------
 app.whenReady().then(() => {
-  startKernel()
+  const kernelPath = getKernelPath()
+
+  // --------------------------------------------------
+  // Start kernel ALLEEN als:
+  // - app gepackaged is
+  // - kernel.exe effectief bestaat
+  // --------------------------------------------------
+  if (app.isPackaged && fs.existsSync(kernelPath)) {
+    startKernel()
+  } else {
+    console.log('[UI] Dev mode or kernel missing: kernel not auto-started')
+  }
+
   createWindow()
   startPolling()
 })
+
 
 app.on('before-quit', () => {
   stopPolling()

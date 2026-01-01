@@ -4,7 +4,8 @@
 //
 // BELANGRIJK:
 // - Geen CORS (Electron / native UI)
-// - Body size limit UITGESCHAKELD (vereist voor module ZIP uploads)
+// - Body size limit UIT (vereist voor grote uploads)
+// - GEEN multipart (raw binary upload)
 // - Guard blijft actief
 // ======================================================================
 
@@ -32,14 +33,16 @@ use modules::*;
 use status::*;
 use ai::*;
 
+use tower_http::limit::RequestBodyLimitLayer;
+
 pub fn build_router(state: Arc<KernelState>) -> Router {
     Router::new()
 
         // ==================================================
-        // ⚠️ CRUCIAAL: BODY SIZE LIMIT UIT
-        // Nodig voor grote multipart uploads (ZIP modules)
+        // ❗ LIMITS UIT (RAW BODY STREAMING, MULTI-GB)
         // ==================================================
         .layer(DefaultBodyLimit::disable())
+        .layer(RequestBodyLimitLayer::new(usize::MAX))
 
         // ==================================================
         // AUTH
@@ -89,14 +92,18 @@ pub fn build_router(state: Arc<KernelState>) -> Router {
             move |path| unpair_module(s.clone(), path)
         }))
 
-        // Upload ZIP (grote bestanden)
+        // ==================================================
+        // MODULE UPLOAD (RAW BODY, STREAMING)
+        // ==================================================
         .route("/modules/upload", post(upload::upload_module))
 
-        // Install uit uploads/
+        // ==================================================
+        // MODULE INSTALL
+        // ==================================================
         .route("/modules/install/:upload_id", post(install::install_module))
 
         // ==================================================
-        // 🔒 GUARD (ADMIN AUTH)
+        // 🔒 GUARD (ALTIJD LAATST)
         // ==================================================
         .layer(middleware::from_fn({
             let s = state.clone();

@@ -1,45 +1,50 @@
 // ======================================================================
 // 📍 FILE: elysia_core/src/http/upload.rs
 // 📝 ROLE:
-//   Inerte module upload (ZIP only)
-//   - Admin-only
-//   - Opslag in uploads/modules (AppData)
-//   - GEEN extractie
-//   - GEEN validatie
+//   Inerte module upload (RAW ZIP stream)
+//   - Admin-only (guard)
+//   - Content-Type: application/octet-stream
+//   - X-Filename header verplicht
+//   - Streaming → disk (multi-GB safe)
+//   - GEEN multipart
+//   - GEEN buffering
 //   - GEEN side effects
 // ======================================================================
 
 use axum::{
-    extract::Multipart,
-    http::StatusCode,
+    body::Body,
+    http::{Request, StatusCode},
     response::IntoResponse,
+};
+use tokio::{
+    fs,
+    io::AsyncWriteExt,
 };
 use uuid::Uuid;
 use std::path::PathBuf;
-use tokio::fs;
+
+// CRUCIAAL: Hyper 1 streaming trait
+use http_body_util::BodyExt;
 
 pub async fn upload_module(
-    mut multipart: Multipart,
+    mut req: Request<Body>,
 ) -> impl IntoResponse {
     // --------------------------------------------------
-    // Lees multipart field
+    // Filename uit header
     // --------------------------------------------------
-    let Some(field) = multipart.next_field().await.ok().flatten() else {
-        return StatusCode::BAD_REQUEST;
+    let filename = match req.headers().get("x-filename") {
+        Some(v) => match v.to_str() {
+            Ok(s) => s,
+            Err(_) => return StatusCode::BAD_REQUEST,
+        },
+        None => return StatusCode::BAD_REQUEST,
     };
 
-    let filename = field.file_name().unwrap_or("");
-    if !filename.ends_with(".zip") {
+    if !filename.to_lowercase().ends_with(".zip") {
         return StatusCode::UNSUPPORTED_MEDIA_TYPE;
     }
 
-    let data = match field.bytes().await {
-        Ok(d) => d,
-        Err(_) => return StatusCode::BAD_REQUEST,
-    };
-
     // --------------------------------------------------
-    // Bepaal productie-correct datapad
     // %LOCALAPPDATA%/elysia/uploads/modules
     // --------------------------------------------------
     let base_dir = match dirs::data_local_dir() {
@@ -47,20 +52,42 @@ pub async fn upload_module(
         None => return StatusCode::INTERNAL_SERVER_ERROR,
     };
 
-    let id = Uuid::new_v4().to_string();
-    let path: PathBuf = base_dir.join(format!("{}.zip", id));
-
-    // --------------------------------------------------
-    // Zorg dat directory bestaat
-    // --------------------------------------------------
-    if let Err(_) = fs::create_dir_all(&base_dir).await {
+    if fs::create_dir_all(&base_dir).await.is_err() {
         return StatusCode::INTERNAL_SERVER_ERROR;
     }
 
+    let id = Uuid::new_v4().to_string();
+    let path: PathBuf = base_dir.join(format!("{}.zip", id));
+
+    let mut file = match fs::File::create(&path).await {
+        Ok(f) => f,
+        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+    };
+
     // --------------------------------------------------
-    // Schrijf ZIP bestand
+    // STREAM body → disk (frame-based, correct)
     // --------------------------------------------------
-    if let Err(_) = fs::write(&path, data).await {
+    let mut body = req.into_body();
+
+    while let Some(frame) = body.frame().await {
+        let frame = match frame {
+            Ok(f) => f,
+            Err(_) => {
+                let _ = fs::remove_file(&path).await;
+                return StatusCode::BAD_REQUEST;
+            }
+        };
+
+        if let Some(data) = frame.data_ref() {
+            if file.write_all(data).await.is_err() {
+                let _ = fs::remove_file(&path).await;
+                return StatusCode::INTERNAL_SERVER_ERROR;
+            }
+        }
+    }
+
+    if file.flush().await.is_err() {
+        let _ = fs::remove_file(&path).await;
         return StatusCode::INTERNAL_SERVER_ERROR;
     }
 
