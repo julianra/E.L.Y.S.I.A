@@ -90,4 +90,5 @@ Thumbs.db
 target
 
 modules/ai/runtime
-modules/ai/ai_release.zip
+*.zip
+.vscode

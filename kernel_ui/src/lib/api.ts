@@ -24,9 +24,14 @@ export async function api(
   };
 
   // ❗ Alleen JSON header zetten als body leeg is
-  if (!options.body && !headers["Content-Type"]) {
-    headers["Content-Type"] = "application/json";
-  }
+  if (
+  options.body &&
+  typeof options.body === "string" &&
+  !headers["Content-Type"]
+) {
+  headers["Content-Type"] = "application/json";
+}
+
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
